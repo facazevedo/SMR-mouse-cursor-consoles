@@ -1,5 +1,56 @@
 # Validation record
 
+## Version 2: trigger boost and menus
+
+2026-09-27: added hold-L2/LT cursor acceleration (250%, configurable), with
+current controller state polled every frame. Release restores normal speed even
+if a button-up event is missed; disabling boost or exiting mouse mode clears the
+boost state. Trigger names and their threshold come from the shipped
+`CommonLua/UI/xinput.lua` (`AnalogsAsButtons`, `GetButtonTreshold`,
+`IsCtrlButtonPressed`). No new engine API was invented or required.
+
+Removed the colony-only activation gate. R3 now toggles mouse mode at the native
+first main menu (Tutorial / New Game / Load Game) and in setup screens. Mouse
+mode remains active through new-game, load-game, map-change and return-to-menu
+messages; those transitions release held clicks and cancel wheel repeats.
+Focus loss, controller disconnection, explicit toggle-off and unloading still
+restore previous controls. Loading screens retain the engine's input/visibility
+restrictions. No saved preference or save-data schema was added.
+
+Changed the configuration, cursor movement, input eligibility, lifecycle and
+message wiring, metadata, README and tests. Metadata version is now **2**;
+`items.lua` and the explicit load order are unchanged. `DEBUG_LOGS` and
+`DEBUG_INPUT` remain boolean `false` by default; boost start/stop logs require
+both flags to be exactly `true`. Transition logs use `DEBUG_LOGS`.
+
+Validation: Lua 5.4 syntax checks passed for all payload and test Lua files;
+**79 host assertions** passed, including exact 2.5x movement, release, dead zone,
+boost disable, multiplier/binding validation, held-trigger cleanup and mode
+retention across screen-transition messages. **21 native Windows engine checks**
+passed on revision 405907, including the real first main menu with no colony
+eligibility stub, acceleration/release in the live cursor loop, and native UI
+mouse dispatch. Only controller state is simulated in that native suite.
+
+Read and retained the previous `MarsDebug.exe-20260927-08.06.21-6aad2de6.log`
+and fresh `MarsDebug.exe-20260927-08.22.54-6aad2de6.log`, plus launch log
+`daemon-20260927-122254.log`; the fresh game log contains no `[LUA ERROR]` or
+`Assertion failed` matches. The first native input probe after loading reported
+a hidden cursor; a subsequent probe after the menu settled passed the same
+visibility check and recorded the native cursor image and visibility reasons.
+That failed probe is retained as `tests/results/native-input-v2.json`; the final
+passing report is `tests/results/native-input-v2-final.json`. Console rendering
+and physical input remain unverified; these results do not certify every screen
+transition or an actual save/load/new-colony sequence.
+
+The eight-file local payload was syntax-checked and deployed with hash
+verification. Protected/game/third-party sources and local instruction files
+were not edited. As requested, `AGENTS.md` and `CLAUDE.md` are now ignored and
+removed from Git's current tree, with local copies preserved. Earlier commits
+are not rewritten. No logs were deleted. Manual checks, including trigger boost
+and the first main menu, are listed in the README.
+
+## Version 1 evidence
+
 Initial implementation, metadata version 1, 2026-09-27.
 
 ## Project discovery

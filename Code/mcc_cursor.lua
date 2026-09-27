@@ -36,16 +36,36 @@ function M.UpdateCursorVisibility()
 end
 
 -- Pure arithmetic separated from engine IO for deterministic movement checks.
-function M.MoveCursor(x, y, axis_x, axis_y, length, dt, width, height)
+function M.MoveCursor(x, y, axis_x, axis_y, length, dt, width, height, boosted)
     local deadzone = M.Config.STICK_DEADZONE
     if length > deadzone then
         local magnitude = Min(length, 32767) - deadzone
         local speed = MulDivRound(M.Config.CURSOR_SPEED, height, 1080)
+        if boosted == true then speed = MulDivRound(speed, M.Config.CURSOR_BOOST_PERCENT, 100) end
         local distance = MulDivRound(speed * Min(dt, 50), magnitude, 32767 - deadzone)
         x = x + MulDivRound(axis_x, distance, length)
         y = y - MulDivRound(axis_y, distance, length)
     end
     return Clamp(x, 0, Max(0, width - 1) * 1000), Clamp(y, 0, Max(0, height - 1) * 1000)
+end
+
+function M.SetSpeedBoost(boosted)
+    if M.boost_active == boosted then return end
+    M.boost_active = boosted
+    M.InputLog("speed_boost_changed", {
+        active = boosted, controller = M.controller,
+        button = M.Config.SPEED_BOOST_BUTTON,
+        speed_percent = boosted and M.Config.CURSOR_BOOST_PERCENT or 100,
+    })
+end
+
+function M.UpdateSpeedBoost()
+    -- Read current physical state every frame, so a missed button-up event
+    -- cannot leave the speed boosted. Only the mode's owning controller counts.
+    local boosted = M.active and M.Config.ENABLE_SPEED_BOOST == true
+        and XInput.IsCtrlButtonPressed(M.controller, M.Config.SPEED_BOOST_BUTTON) == true
+    M.SetSpeedBoost(boosted)
+    return boosted
 end
 
 function M.SetCursorPosition(pos)
@@ -95,10 +115,11 @@ function MCCCursor:TrackLeftStick()
         end
         local state = XInput.CurrentState[M.controller]
         local time = RealTime()
+        local boosted = M.UpdateSpeedBoost()
         if type(state) == "table" and state.LeftThumb then
             local ax, ay = state.LeftThumb:xy()
             local width, height = UIL.GetScreenSizeXY()
-            M.x, M.y = M.MoveCursor(M.x, M.y, ax, ay, state.LeftThumb:Len2D(), time - last_time, width, height)
+            M.x, M.y = M.MoveCursor(M.x, M.y, ax, ay, state.LeftThumb:Len2D(), time - last_time, width, height, boosted)
             local pos = point(MulDivRound(M.x, 1, 1000), MulDivRound(M.y, 1, 1000))
             if pos ~= M.position then M.SetCursorPosition(pos) end
         end

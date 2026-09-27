@@ -1,26 +1,33 @@
 # Mouse Cursor Consoles
 
 A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor and
-temporarily uses the PC interface. Initial release: metadata version **1**.
+temporarily uses the PC interface. Current release: metadata version **2**.
 
 | Action | PS5 | Xbox Series X/S |
 | --- | --- | --- |
 | Mouse mode on / off | R3 | Right-stick click |
 | Move cursor | Left stick | Left stick |
+| Hold for 2.5x cursor speed | L2 | LT |
 | Left click / hold to drag | Cross | A |
 | Right click | Circle | B |
 | Wheel up | L1 | LB |
 | Wheel down | R1 | RB |
 | Menu / Escape | Options | Menu |
 
-Activate the mod and open a colony before toggling mouse mode. A second press of
-the same toggle restores the previous control style. The cursor starts in the
+Activate the mod and press R3 on any interactive game screen, including the first
+main menu with Tutorial, New Game and Load Game. No colony needs to be loaded.
+A second press of the same toggle restores the previous control style. The cursor starts in the
 screen center each time. The right stick does not move it. Both native camera
 sticks are locked while mouse mode is active; move to the screen edge for the
 game's PC camera behavior. Other controller actions are suppressed in mouse mode
 to avoid triggering both a mouse action and its original controller action.
 
-**R3 normally pauses the game.** This mod reserves it for the toggle in a colony,
+Hold L2 / LT while moving the left stick to move 2.5 times faster. Release it
+to return to normal speed on the next frame. This is a hold modifier, not a
+toggle; it does not change click or wheel behavior. It has no effect outside
+mouse mode. Holding it before entering mouse mode also enables the boost.
+
+**R3 normally pauses the game in a colony.** This mod reserves it for the toggle on all screens,
 including while mouse mode is off. Use the HUD's pause control, or configure a
 different toggle. Turning off the feature or unloading the mod restores R3 too.
 
@@ -52,6 +59,11 @@ Redeploy and reload the mod after editing. Bindings must be distinct engine
 button names. Logging covers API/configuration failures, registration, toggles,
 restoration reasons, input dispatch, and override ownership conflicts.
 
+Speed boost settings are `ENABLE_SPEED_BOOST=true`,
+`SPEED_BOOST_BUTTON="LeftTrigger"`, and `CURSOR_BOOST_PERCENT=250`. The percentage
+must be an integer from 101 to 1000 (250 means 2.5x). Boost transitions log only
+when both `DEBUG_LOGS` and `DEBUG_INPUT` are exactly `true`.
+
 ## Ownership and restoration
 
 - `mcc_config.lua`: configuration and transient state in the mod environment.
@@ -73,9 +85,12 @@ override; a later third-party wrapper is preserved with an inactive passthrough.
 UI-style changes use `ChangeGamepadUIStyle`, never `SwitchControls`, so the user's
 saved control preference is not overwritten. Camera lock ownership is additive.
 
-Toggle-off releases held mouse buttons before removing the cursor. Map changes,
-load-game notifications, end-game, loss of focus, controller disconnection,
-external control-style changes, Lua reload and mod unloading also restore state.
+Toggle-off releases held mouse buttons before removing the cursor. Mouse mode
+stays active across new-game, load-game, map-change and return-to-menu transitions;
+these transitions release held clicks and cancel repeat scrolling to avoid stale
+drags. Engine loading screens may temporarily hide the cursor or block input.
+Loss of focus, controller disconnection, external control-style changes, Lua
+reload and mod unloading restore the previous controls and turn mouse mode off.
 Buttons held across a toggle must be released before producing a new mouse click.
 
 ## Verification
@@ -87,9 +102,13 @@ under `tests/` are for a disposable Windows debug-game process using the local
 
 Before publishing, perform these checks separately on PS5 and Xbox Series X/S:
 
-1. Enable the mod, start a colony, press R3, and confirm the cursor appears and
-   the PC interface is usable. Move left stick in all directions; verify dead
+1. Enable the mod, press R3 on the first Tutorial / New Game / Load Game menu,
+   and confirm the cursor works there and in setup screens. Start a colony and
+   verify mouse mode stays on. Move left stick in all directions; verify dead
    zone, screen edges and speed. Right stick must not move the cursor or camera.
+   Hold L2 / LT and confirm faster travel; release it and confirm normal
+   speed immediately resumes. Test toggle-off and disconnect while holding it,
+   and verify `ENABLE_SPEED_BOOST=false` prevents acceleration.
 2. Select a building, open tooltips and menus, double click, drag a slider and
    scrollbar, place/cancel construction, and issue a unit right-click command.
    Confirm exactly one action occurs at the cursor location.
@@ -98,8 +117,9 @@ Before publishing, perform these checks separately on PS5 and Xbox Series X/S:
 4. Toggle off while holding each mouse button. Confirm no stuck drag/click and
    no leaked controller action on release. Toggle repeatedly and hold R3;
    holding it must not switch repeatedly. Confirm normal camera controls return.
-5. Disconnect/reconnect the controller, switch maps, save and reload, and return
-   to the main menu. Mouse mode must exit cleanly. Test an existing save too.
+5. Switch maps, save and reload, and return to the main menu. Mouse mode must
+   remain active without stuck clicks or drags. Test an existing save too.
+   Disconnect/reconnect the controller and verify mouse mode exits cleanly.
 6. Test `ENABLE_MOUSE_MODE=false` and both debug flags on/off; verify ordinary R3
    behavior when disabled, quiet logs when debug is off, and no duplicated input
    targets/cursors after repeated enable/unload/reload.

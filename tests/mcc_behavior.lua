@@ -64,13 +64,17 @@ function ChangeGamepadUIStyle(value)
     end
 end
 function OnUIStyleChangedDialogs() end
-function GetInGameInterface() return true end
+function GetInGameInterface() return nil end -- first main menu, no colony loaded
 UIL = { GetScreenSizeXY = function() return 1920, 1080 end }
 XInput = {
     CurrentState = { [0] = { LeftThumb = point(0, 0), RightThumb = point(32767, 0) } },
     Buttons = { "RightThumbClick", "ButtonA", "ButtonB", "ButtonX", "LeftShoulder", "RightShoulder", "Start" },
+    AnalogsAsButtons = { "LeftTrigger", "RightTrigger" },
     IsControllerConnected = function() return connected end,
-    IsCtrlButtonPressed = function(_, button) return physical[button] end,
+    IsCtrlButtonPressed = function(_, button)
+        if button == "LeftTrigger" then return (physical[button] or 0) >= 64 end
+        return physical[button]
+    end,
 }
 const = { DefaultMouseCursor = "UI/Cursors/Cursor.tga" }
 ShowMouseReasons, ForceHideMouseReasons, ForceShowMouseReasons = {}, { MouseDisconnected = true }, {}
@@ -91,6 +95,7 @@ function PlaceObj(_, values)
     local obj = {}; for i = 1, #values, 2 do obj[values[i]] = values[i + 1] end; return obj
 end
 local metadata, items = dofile("metadata.lua"), dofile("items.lua")
+CurrentModDef.version = metadata.version
 for i, file in ipairs(metadata.code) do
     check(items[i].CodeFileName == file, "Editor and runtime load orders differ")
     dofile(file)
@@ -104,7 +109,7 @@ end
 msg("ClassesBuilt"); local input = M.input; msg("ModsReloaded")
 check(input == M.input, "Installation must be idempotent")
 toggle()
-check(M.active and style == "keyboard" and M.cursor.visible, "Toggle must enable PC cursor")
+check(M.active and style == "keyboard" and M.cursor.visible, "Toggle must enable PC cursor at the main menu without a colony")
 check(hr.XBoxLeftThumbLocked == 4 and hr.XBoxRightThumbLocked == 5, "Both native sticks must be locked")
 check(not RolloverSuspendReasons[false] and RolloverSuspendReasons.unrelated, "Only disconnected-mouse rollover suspension may be lifted")
 check(events[#events].last == true, "Mouse movement must reach terminal dispatch")
@@ -127,6 +132,40 @@ check(coroutine.resume(thread, cursor), "Cursor loop must start")
 clock = clock + 16
 check(coroutine.resume(thread), "Cursor loop must resume")
 check(M.position == point(960, 540), "Right stick alone must not move cursor")
+local function step()
+    clock = clock + 20
+    local ok, err = coroutine.resume(thread)
+    assert(ok, err)
+end
+XInput.CurrentState[0].LeftThumb = point(32767, 0)
+physical.LeftTrigger = 63
+local before = M.x
+step()
+check(not M.boost_active and M.x - before == 18000, "Below trigger threshold must keep normal speed")
+physical.LeftTrigger = 64
+before = M.x
+step()
+check(M.boost_active and M.x - before == 45000, "Held L2/LT must move exactly 2.5x faster")
+local boost_events = #events
+event("OnXButtonDown", "LeftTrigger"); event("OnXButtonRepeat", "LeftTrigger")
+check(#events == boost_events, "Boost trigger must not emit clicks or wheel events")
+physical.LeftTrigger = 0 -- deliberately omit button-up delivery until after polling
+before = M.x
+step()
+check(not M.boost_active and M.x - before == 18000, "Physical release must restore speed even without button-up")
+event("OnXButtonUp", "LeftTrigger")
+M.Config.ENABLE_SPEED_BOOST = false
+physical.LeftTrigger = 255
+before = M.x
+step()
+check(not M.boost_active and M.x - before == 18000, "Disabled boost flag must prevent acceleration")
+M.Config.ENABLE_SPEED_BOOST = true
+XInput.CurrentState[0].LeftThumb = point(0, 0)
+before = M.x
+step()
+check(M.boost_active and M.x == before, "Held boost alone must not move cursor")
+physical.LeftTrigger = 0
+step()
 event("OnXButtonDown", "ButtonA")
 check(events[#events].event == "OnMouseButtonDown" and events[#events].button == "L", "Cross/A must press left mouse")
 local count = #events
@@ -151,7 +190,10 @@ check(events[#events].event == "Escape", "Menu must dispatch PC Escape")
 count = #events
 event("OnXButtonDown", "ButtonA", 1); event("OnXButtonDown", "RightThumbClick", 1)
 check(M.active and #events == count, "Other controller cannot click or toggle owner session")
+physical.LeftTrigger = 255; M.UpdateSpeedBoost()
 event("OnXButtonDown", "ButtonB"); toggle()
+check(not M.boost_active, "Toggle off must clear boost even if trigger remains held")
+physical.LeftTrigger = 0
 check(not M.active and not M.cursor and style == "gamepad", "Same toggle must restore gamepad")
 check(events[#events].event == "OnMouseButtonUp" and events[#events].button == "R", "Exit must release held right click")
 check(hr.XBoxLeftThumbLocked == 2 and hr.XBoxRightThumbLocked == 3, "Exit must preserve existing camera locks")
@@ -173,10 +215,22 @@ event("OnXButtonUp", "ButtonA"); event("OnXButtonUp", "LeftShoulder")
 physical = {}
 msg("OnXInputControllerDisconnected", 0)
 check(not M.active and style == "gamepad", "Disconnect must restore controls")
-for _, hook in ipairs({ "ChangeMap", "LoadGame", "DoneGame", "SystemInactivate" }) do
-    toggle(); msg(hook)
-    check(not M.active and style == "gamepad", hook .. " must restore controls")
+toggle()
+for _, hook in ipairs({ "NewGame", "ChangeMap", "LoadGame", "DoneGame" }) do
+    local retained_cursor = M.cursor
+    event("OnXButtonDown", "ButtonA")
+    event("OnXButtonDown", "LeftShoulder")
+    msg(hook)
+    check(M.active and M.cursor == retained_cursor and style == "keyboard", hook .. " must preserve mouse mode across screens")
+    check(not M.clicks.L and events[#events].event == "OnMouseButtonUp", hook .. " must release held clicks")
+    local event_count = #events
+    event("OnXButtonRepeat", "LeftShoulder")
+    check(#events == event_count, hook .. " must cancel held wheel repeats")
+    event("OnXButtonUp", "ButtonA"); event("OnXButtonUp", "LeftShoulder")
 end
+physical.LeftTrigger = 255; M.UpdateSpeedBoost(); msg("SystemInactivate")
+check(not M.active and not M.boost_active and style == "gamepad", "Focus loss must restore controls and boost")
+physical.LeftTrigger = 0
 toggle(); ChangeGamepadUIStyle({ [1] = "gamepad" })
 check(not M.active and hr.XBoxLeftThumbLocked == 2, "External control-style change must release ownership")
 M.Config.ENABLE_MOUSE_MODE = false
@@ -188,6 +242,16 @@ GamepadMouseSetPos = fn
 M.Config.RIGHT_CLICK_BUTTON = "ButtonA"
 check(not M.Validate(), "Conflicting bindings must be rejected")
 M.Config.RIGHT_CLICK_BUTTON = "ButtonB"
+M.Config.SPEED_BOOST_BUTTON = "ButtonA"
+check(not M.Validate(), "Boost binding must not collide with left click")
+M.Config.SPEED_BOOST_BUTTON = "RightTrigger"
+check(M.Validate(), "Right trigger is a supported configurable boost binding")
+M.Config.SPEED_BOOST_BUTTON = "LeftTrigger"
+for _, invalid in ipairs({ 100, 1001, 150.5, "250" }) do
+    M.Config.CURSOR_BOOST_PERCENT = invalid
+    check(not M.Validate(), "Invalid boost multiplier must be rejected: " .. tostring(invalid))
+end
+M.Config.CURSOR_BOOST_PERCENT = 250
 hr.GamepadMouseEnabled = true
 check(not M.ApplyModBehavior(0), "Existing virtual mouse ownership must be respected")
 hr.GamepadMouseEnabled = false
@@ -197,6 +261,10 @@ M.Config.DEBUG_LOGS = "true"; M.Log("Test", "string")
 check(#logs == 0, "Debug flag must be exactly boolean true")
 M.Config.DEBUG_LOGS = true; M.Log("Test", "enabled", { active = false })
 check(#logs == 1 and logs[1]:find("active=false", 1, true), "Structured logs must be readable")
+M.SetSpeedBoost(true)
+check(#logs == 1, "Boost transitions must respect DEBUG_INPUT=false")
+M.Config.DEBUG_INPUT = true; M.SetSpeedBoost(false)
+check(#logs == 2 and logs[2]:find("speed_boost_changed", 1, true), "Boost transition must log with both debug flags true")
 M.Config.DEBUG_LOGS = false
 toggle(); msg("ModUnloadLua", CurrentModId)
 check(not M.active and not M.input and next(terminal.targets) == nil, "Unload must remove cursor, locks and input target")

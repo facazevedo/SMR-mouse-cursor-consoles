@@ -4,13 +4,16 @@ local M = MCC
 OnMsg.ClassesBuilt = M.Install
 OnMsg.ModsReloaded = M.Install
 
-function OnMsg.NewGame() M.Install() end
-function OnMsg.LoadGame()
-    M.RestoreVanillaBehavior("load_game")
+function OnMsg.NewGame()
+    M.ReleaseTransitionInput("new_game")
     M.Install()
 end
-function OnMsg.ChangeMap() M.RestoreVanillaBehavior("change_map") end
-function OnMsg.DoneGame() M.RestoreVanillaBehavior("done_game") end
+function OnMsg.LoadGame()
+    M.ReleaseTransitionInput("load_game")
+    M.Install()
+end
+function OnMsg.ChangeMap() M.ReleaseTransitionInput("change_map") end
+function OnMsg.DoneGame() M.ReleaseTransitionInput("done_game") end
 function OnMsg.SystemInactivate()
     M.RestoreVanillaBehavior("focus_lost")
     M.held, M.swallowed = {}, {}

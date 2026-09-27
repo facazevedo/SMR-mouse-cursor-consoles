@@ -8,7 +8,7 @@ end
 function M.Validate()
     for _, name in ipairs({
         "GetUIStyle", "ChangeGamepadUIStyle", "OnUIStyleChangedDialogs",
-        "GamepadMouseSetPos", "GamepadMouseGetPos", "GetInGameInterface",
+        "GamepadMouseSetPos", "GamepadMouseGetPos",
         "ForceHideMouseCursor", "UnforceHideMouseCursor", "ShowMouseCursor", "HideMouseCursor",
         "ResumeRollover", "SuspendRollover", "XDestroyRolloverWindow",
         "RealTime", "WaitNextFrame", "point", "MulDivRound", "Clamp", "Min", "Max",
@@ -32,23 +32,29 @@ function M.Validate()
     for _, name in ipairs({ "ShowMouseReasons", "ForceHideMouseReasons", "ForceShowMouseReasons", "RolloverSuspendReasons" }) do
         if type(rawget(_G, name)) ~= "table" then return unavailable("Missing cursor state: " .. name) end
     end
-    if type(XInput.CurrentState) ~= "table" or type(XInput.Buttons) ~= "table" or not rawget(_G, "hr")
+    if type(XInput.CurrentState) ~= "table" or type(XInput.Buttons) ~= "table"
+        or type(XInput.AnalogsAsButtons) ~= "table" or not rawget(_G, "hr")
         or type(hr.XBoxLeftThumbLocked) ~= "number" or type(hr.XBoxRightThumbLocked) ~= "number" then
         return unavailable("Controller state or camera lock counters are unavailable")
     end
     local bindings = {}
-    for _, key in ipairs({ "TOGGLE_BUTTON", "LEFT_CLICK_BUTTON", "RIGHT_CLICK_BUTTON", "WHEEL_UP_BUTTON", "WHEEL_DOWN_BUTTON", "MENU_BUTTON" }) do
+    for _, key in ipairs({ "TOGGLE_BUTTON", "LEFT_CLICK_BUTTON", "RIGHT_CLICK_BUTTON", "WHEEL_UP_BUTTON", "WHEEL_DOWN_BUTTON", "MENU_BUTTON", "SPEED_BOOST_BUTTON" }) do
         local value = M.Config[key]
         local known = false
         for _, button in ipairs(XInput.Buttons) do if value == button then known = true end end
+        if key == "SPEED_BOOST_BUTTON" then
+            for _, button in ipairs(XInput.AnalogsAsButtons) do if value == button then known = true end end
+        end
         if not known or bindings[value] then return unavailable("Invalid or duplicate binding: " .. key) end
         bindings[value] = true
     end
     if type(M.Config.CURSOR_SPEED) ~= "number" or M.Config.CURSOR_SPEED <= 0
+        or type(M.Config.CURSOR_BOOST_PERCENT) ~= "number" or not (M.Config.CURSOR_BOOST_PERCENT > 100 and M.Config.CURSOR_BOOST_PERCENT <= 1000)
+        or M.Config.CURSOR_BOOST_PERCENT % 1 ~= 0
         or type(M.Config.STICK_DEADZONE) ~= "number" or M.Config.STICK_DEADZONE < 0 or M.Config.STICK_DEADZONE >= 32767
         or type(M.Config.DOUBLE_CLICK_MS) ~= "number" or M.Config.DOUBLE_CLICK_MS < 0
         or type(M.Config.DOUBLE_CLICK_DISTANCE) ~= "number" or M.Config.DOUBLE_CLICK_DISTANCE < 0 then
-        return unavailable("Invalid cursor speed, dead zone, or double-click configuration")
+        return unavailable("Invalid cursor speed, boost percentage (integer 101-1000), dead zone, or double-click configuration")
     end
     return true
 end
@@ -58,7 +64,6 @@ function M.ApplyModBehavior(controller)
     if M.Config.ENABLE_MOUSE_MODE ~= true then return false, "Mouse mode is disabled" end
     local ok, reason = M.Validate()
     if not ok then return false, reason end
-    if ChangingMap or not GetInGameInterface() then return false, "Open a colony before enabling mouse mode" end
     if not XInput.IsControllerConnected(controller) then return false, "Controller is disconnected" end
     if hr.GamepadMouseEnabled == true or hr.GamepadMouseEnabled == 1 then
         return unavailable("Another virtual mouse is already active")
@@ -87,7 +92,7 @@ function M.ApplyModBehavior(controller)
     if M.previous_rollover_suspended then ResumeRollover() end
     M.CreateCursor()
     M.transitioning = false
-    M.Log("Lifecycle", "mouse_mode_enabled", { controller = controller, previous_style = style, stick = "LeftThumb", speed = M.Config.CURSOR_SPEED })
+    M.Log("Lifecycle", "mouse_mode_enabled", { controller = controller, previous_style = style, stick = "LeftThumb", speed = M.Config.CURSOR_SPEED, boost_enabled = M.Config.ENABLE_SPEED_BOOST, boost_button = M.Config.SPEED_BOOST_BUTTON, boost_percent = M.Config.CURSOR_BOOST_PERCENT })
     return true
 end
 
@@ -95,6 +100,7 @@ function M.RestoreVanillaBehavior(reason, keep_current_style)
     if not M.active then return true end
     M.transitioning = true
     M.ReleaseClicks()
+    M.SetSpeedBoost(false)
     M.active = false
     M.DestroyCursor()
     XDestroyRolloverWindow(true)
@@ -114,6 +120,14 @@ function M.RestoreVanillaBehavior(reason, keep_current_style)
     M.Log("Lifecycle", "mouse_mode_disabled", { reason = reason, restored_style = GetUIStyle(), controller = M.controller })
     M.controller, M.position = nil, nil
     return true
+end
+
+function M.ReleaseTransitionInput(reason)
+    if not M.active then return end
+    -- The cursor belongs to the desktop, which outlives colony screens. Keep
+    -- mouse mode active while releasing drags against windows being destroyed.
+    M.ReleaseClicks()
+    M.Log("Lifecycle", "screen_transition", { reason = reason, mouse_mode = true })
 end
 
 function M.Toggle(controller)

@@ -54,7 +54,6 @@ function MCCInput:OnXButtonDown(button, controller)
         return "break"
     end
     if button == M.Config.TOGGLE_BUTTON and M.Config.ENABLE_MOUSE_MODE == true then
-        if not M.active and (ChangingMap or not GetInGameInterface()) then return end
         if not M.active and type(ActiveController) == "number" and ActiveController ~= controller then return end
         bucket(M.swallowed, controller)[button] = true
         if not duplicate then M.Toggle(controller) end
