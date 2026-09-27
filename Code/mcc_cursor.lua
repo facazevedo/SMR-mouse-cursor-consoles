@@ -21,6 +21,7 @@ function MCCCursor:Init()
     }, self)
     image:AddDynamicPosModifier({ id = "cursor", target = "gamepad" })
     image:SetImage(const.DefaultMouseCursor)
+    M.StyleCursor(image, M.Config)
 end
 
 function M.UpdateCursorVisibility()
@@ -35,18 +36,41 @@ function M.UpdateCursorVisibility()
     M.cursor:SetVisible(visible)
 end
 
--- Pure arithmetic separated from engine IO for deterministic movement checks.
-function M.MoveCursor(x, y, axis_x, axis_y, length, dt, width, height, boosted)
-    local deadzone = M.Config.STICK_DEADZONE
+local function velocity(axis_x, axis_y, length, height, boosted, cfg)
+    local deadzone = cfg.STICK_DEADZONE
     if length > deadzone then
         local magnitude = Min(length, 32767) - deadzone
-        local speed = MulDivRound(M.Config.CURSOR_SPEED, height, 1080)
-        if boosted == true then speed = MulDivRound(speed, M.Config.CURSOR_BOOST_PERCENT, 100) end
-        local distance = MulDivRound(speed * Min(dt, 50), magnitude, 32767 - deadzone)
-        x = x + MulDivRound(axis_x, distance, length)
-        y = y - MulDivRound(axis_y, distance, length)
+        if cfg.RESPONSE_CURVE == "Gradual" then magnitude = MulDivRound(magnitude, magnitude, 32767 - deadzone) end
+        local speed = MulDivRound(boosted and cfg.CURSOR_FAST_SPEED or cfg.CURSOR_SPEED, height, 1080)
+        local rate = MulDivRound(speed * 1000, magnitude, 32767 - deadzone)
+        return MulDivRound(axis_x, rate, length), -MulDivRound(axis_y, rate, length)
     end
+    return 0, 0
+end
+
+-- Pure arithmetic separated from engine IO for deterministic movement checks.
+function M.MoveCursor(x, y, axis_x, axis_y, length, dt, width, height, boosted, config)
+    local vx, vy = velocity(axis_x, axis_y, length, height, boosted, config or M.Config)
+    dt = Clamp(dt, 0, 50)
+    x, y = x + MulDivRound(vx, dt, 1000), y + MulDivRound(vy, dt, 1000)
     return Clamp(x, 0, Max(0, width - 1) * 1000), Clamp(y, 0, Max(0, height - 1) * 1000)
+end
+
+-- Shared by the real cursor and test area. Filter velocity, never cursor position,
+-- and stop immediately inside the dead zone so smoothing cannot cause drift.
+function M.AdvanceCursor(state, ax, ay, length, dt, width, height, boosted, cfg, reference_height)
+    cfg = cfg or M.Config
+    dt = Clamp(dt, 0, 50)
+    if dt == 0 then return state.x, state.y end
+    local vx, vy = velocity(ax, ay, length, reference_height or height, boosted, cfg)
+    if cfg.SMOOTHING_MS > 0 and length > cfg.STICK_DEADZONE then
+        vx = (state.vx or 0) + MulDivRound(vx - (state.vx or 0), dt, cfg.SMOOTHING_MS + dt)
+        vy = (state.vy or 0) + MulDivRound(vy - (state.vy or 0), dt, cfg.SMOOTHING_MS + dt)
+    end
+    state.vx, state.vy = vx, vy
+    state.x = Clamp(state.x + MulDivRound(vx, dt, 1000), 0, Max(0, width - 1) * 1000)
+    state.y = Clamp(state.y + MulDivRound(vy, dt, 1000), 0, Max(0, height - 1) * 1000)
+    return state.x, state.y
 end
 
 function M.SetSpeedBoost(boosted)
@@ -55,7 +79,7 @@ function M.SetSpeedBoost(boosted)
     M.InputLog("speed_boost_changed", {
         active = boosted, controller = M.controller,
         button = M.Config.SPEED_BOOST_BUTTON,
-        speed_percent = boosted and M.Config.CURSOR_BOOST_PERCENT or 100,
+        speed = boosted and M.Config.CURSOR_FAST_SPEED or M.Config.CURSOR_SPEED,
     })
 end
 
@@ -119,7 +143,7 @@ function MCCCursor:TrackLeftStick()
         if type(state) == "table" and state.LeftThumb then
             local ax, ay = state.LeftThumb:xy()
             local width, height = UIL.GetScreenSizeXY()
-            M.x, M.y = M.MoveCursor(M.x, M.y, ax, ay, state.LeftThumb:Len2D(), time - last_time, width, height, boosted)
+            M.x, M.y = M.AdvanceCursor(M.motion, ax, ay, state.LeftThumb:Len2D(), time - last_time, width, height, boosted)
             local pos = point(MulDivRound(M.x, 1, 1000), MulDivRound(M.y, 1, 1000))
             if pos ~= M.position then M.SetCursorPosition(pos) end
         end
@@ -130,6 +154,12 @@ end
 function M.CreateCursor()
     local width, height = UIL.GetScreenSizeXY()
     M.x, M.y = MulDivRound(width, 1000, 2), MulDivRound(height, 1000, 2)
+    if M.Config.REMEMBER_POSITION and M.remembered_position then
+        local saved = M.remembered_position
+        M.x = Clamp(MulDivRound(saved.x, width, saved.width), 0, (width - 1) * 1000)
+        M.y = Clamp(MulDivRound(saved.y, height, saved.height), 0, (height - 1) * 1000)
+    end
+    M.motion = { x = M.x, y = M.y }
     M.cursor = MCCCursor:new({}, terminal.desktop)
     M.cursor:Open()
     M.ApplyMousePositionOverride()
@@ -141,6 +171,11 @@ function M.CreateCursor()
 end
 
 function M.DestroyCursor()
+    if M.Config.REMEMBER_POSITION and M.x and M.y then
+        local width, height = UIL.GetScreenSizeXY()
+        M.remembered_position = { x = M.x, y = M.y, width = width, height = height }
+    end
+    M.motion = nil
     local cursor = M.cursor
     M.cursor = nil
     if cursor and cursor.window_state ~= "destroying" then cursor:delete() end

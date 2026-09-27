@@ -45,6 +45,7 @@ function M.PressMouse(button)
 end
 
 function MCCInput:OnXButtonDown(button, controller)
+    if M.settings_dialog then return end
     local held = bucket(M.held, controller)
     local duplicate = held[button]
     held[button] = true
@@ -76,6 +77,7 @@ function MCCInput:OnXButtonDown(button, controller)
 end
 
 function MCCInput:OnXButtonUp(button, controller)
+    if M.settings_dialog then return end
     bucket(M.held, controller)[button] = nil
     local consumed = bucket(M.swallowed, controller)[button]
     bucket(M.swallowed, controller)[button] = nil
@@ -92,6 +94,7 @@ function MCCInput:OnXButtonUp(button, controller)
 end
 
 function MCCInput:OnXButtonRepeat(button, controller)
+    if M.settings_dialog then return end
     if M.active and controller == M.controller and M.wheels[button] then
         if button == M.Config.WHEEL_UP_BUTTON then M.EmitMouse("OnMouseWheelForward")
         elseif button == M.Config.WHEEL_DOWN_BUTTON then M.EmitMouse("OnMouseWheelBack") end

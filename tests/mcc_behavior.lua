@@ -34,9 +34,13 @@ function window:Open() self.window_state = "open" end
 function window:delete() self.window_state = "destroying"; self.threads = {} end
 function window:SetVisible(v) self.visible = v end
 function window:SetImage(v) self.image = v end
+function window:SetImageScale(v) self.image_scale = v end
+function window:SetImageColor(v) self.image_color = v end
 function window:AddDynamicPosModifier(v) self.modifier = v end
 function window:CreateThread(name, fn, ...) self.threads[name] = coroutine.create(fn) end
 XImage = window
+function RGB(r, g, b) return r * 65536 + g * 256 + b end
+function RGBA(r, g, b, a) return RGB(r, g, b) + a * 16777216 end
 DefineClass = setmetatable({}, { __newindex = function(_, name, value)
     setmetatable(value, { __index = window }); _G[name] = value
 end })
@@ -247,11 +251,11 @@ check(not M.Validate(), "Boost binding must not collide with left click")
 M.Config.SPEED_BOOST_BUTTON = "RightTrigger"
 check(M.Validate(), "Right trigger is a supported configurable boost binding")
 M.Config.SPEED_BOOST_BUTTON = "LeftTrigger"
-for _, invalid in ipairs({ 100, 1001, 150.5, "250" }) do
-    M.Config.CURSOR_BOOST_PERCENT = invalid
-    check(not M.Validate(), "Invalid boost multiplier must be rejected: " .. tostring(invalid))
+for _, invalid in ipairs({ 49, 8001, 150.5, "2250" }) do
+    M.Config.CURSOR_FAST_SPEED = invalid
+    check(not M.Validate(), "Invalid fast speed must be rejected: " .. tostring(invalid))
 end
-M.Config.CURSOR_BOOST_PERCENT = 250
+M.Config.CURSOR_FAST_SPEED = 2250
 hr.GamepadMouseEnabled = true
 check(not M.ApplyModBehavior(0), "Existing virtual mouse ownership must be respected")
 hr.GamepadMouseEnabled = false

@@ -4,6 +4,10 @@ local M = MCC
 OnMsg.ClassesBuilt = M.Install
 OnMsg.ModsReloaded = M.Install
 
+function OnMsg.ApplyModOptions(id)
+    if id == CurrentModId then M.settings_loaded = M.LoadSettings() end
+end
+
 function OnMsg.NewGame()
     M.ReleaseTransitionInput("new_game")
     M.Install()
@@ -15,6 +19,7 @@ end
 function OnMsg.ChangeMap() M.ReleaseTransitionInput("change_map") end
 function OnMsg.DoneGame() M.ReleaseTransitionInput("done_game") end
 function OnMsg.SystemInactivate()
+    if M.settings_dialog and M.settings_dialog.testing then M.settings_dialog:EndTest() end
     M.RestoreVanillaBehavior("focus_lost")
     M.held, M.swallowed = {}, {}
 end

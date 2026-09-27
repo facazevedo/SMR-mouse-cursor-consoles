@@ -48,13 +48,13 @@ function M.Validate()
         if not known or bindings[value] then return unavailable("Invalid or duplicate binding: " .. key) end
         bindings[value] = true
     end
+    local settings_ok, settings_reason = M.ValidateSettings(M.Config)
+    if not settings_ok then return unavailable(settings_reason) end
     if type(M.Config.CURSOR_SPEED) ~= "number" or M.Config.CURSOR_SPEED <= 0
-        or type(M.Config.CURSOR_BOOST_PERCENT) ~= "number" or not (M.Config.CURSOR_BOOST_PERCENT > 100 and M.Config.CURSOR_BOOST_PERCENT <= 1000)
-        or M.Config.CURSOR_BOOST_PERCENT % 1 ~= 0
         or type(M.Config.STICK_DEADZONE) ~= "number" or M.Config.STICK_DEADZONE < 0 or M.Config.STICK_DEADZONE >= 32767
         or type(M.Config.DOUBLE_CLICK_MS) ~= "number" or M.Config.DOUBLE_CLICK_MS < 0
         or type(M.Config.DOUBLE_CLICK_DISTANCE) ~= "number" or M.Config.DOUBLE_CLICK_DISTANCE < 0 then
-        return unavailable("Invalid cursor speed, boost percentage (integer 101-1000), dead zone, or double-click configuration")
+        return unavailable("Invalid cursor speed, dead zone, or double-click configuration")
     end
     return true
 end
@@ -92,7 +92,7 @@ function M.ApplyModBehavior(controller)
     if M.previous_rollover_suspended then ResumeRollover() end
     M.CreateCursor()
     M.transitioning = false
-    M.Log("Lifecycle", "mouse_mode_enabled", { controller = controller, previous_style = style, stick = "LeftThumb", speed = M.Config.CURSOR_SPEED, boost_enabled = M.Config.ENABLE_SPEED_BOOST, boost_button = M.Config.SPEED_BOOST_BUTTON, boost_percent = M.Config.CURSOR_BOOST_PERCENT })
+    M.Log("Lifecycle", "mouse_mode_enabled", { controller = controller, previous_style = style, stick = "LeftThumb", speed = M.Config.CURSOR_SPEED, boost_enabled = M.Config.ENABLE_SPEED_BOOST, boost_button = M.Config.SPEED_BOOST_BUTTON, fast_speed = M.Config.CURSOR_FAST_SPEED })
     return true
 end
 
@@ -141,6 +141,9 @@ function M.Toggle(controller)
 end
 
 function M.Install()
+    if not M.settings_loaded and CurrentModOptions then
+        M.settings_loaded = M.LoadSettings()
+    end
     if M.input or M.Config.ENABLE_MOUSE_MODE ~= true then return end
     local ok = M.Validate()
     if not ok then return end
@@ -150,6 +153,7 @@ function M.Install()
 end
 
 function M.Shutdown(reason)
+    if M.CloseSettings then M.CloseSettings(reason) end
     M.RestoreVanillaBehavior(reason)
     if M.input then terminal.RemoveTarget(M.input); M.input = nil end
     M.held, M.swallowed = {}, {}

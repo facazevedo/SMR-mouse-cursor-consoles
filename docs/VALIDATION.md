@@ -1,5 +1,12 @@
 # Validation record
 
+## Version 3: settings and cursor tuning
+
+See [settings validation](SETTINGS.md) for 120 passing host checks, 49 passing
+native checks, visual review, persistence boundaries, source references and
+remaining console tests. [Publishing validation](PUBLISHING.md) records the
+final eleven-file native package and hash comparison.
+
 ## Version 2: trigger boost and menus
 
 2026-09-27: added hold-L2/LT cursor acceleration (250%, configurable), with

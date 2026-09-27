@@ -15,7 +15,12 @@ rawset(_G, "MCC", {
         MENU_BUTTON = "Start",
         SPEED_BOOST_BUTTON = "LeftTrigger", -- hold L2 / LT
         CURSOR_SPEED = 900, -- pixels/second at 1080p; scales with screen height
-        CURSOR_BOOST_PERCENT = 250, -- 2.5x normal speed while held
+        CURSOR_FAST_SPEED = 2250, -- independent pixels/second at 1080p
+        CURSOR_SIZE = 100, -- percent
+        CURSOR_COLOR = "White",
+        RESPONSE_CURVE = "Linear",
+        SMOOTHING_MS = 0,
+        REMEMBER_POSITION = true,
         STICK_DEADZONE = 6000, -- radial, out of 32767
         DOUBLE_CLICK_MS = 300,
         DOUBLE_CLICK_DISTANCE = 6, -- pixels at 1080p

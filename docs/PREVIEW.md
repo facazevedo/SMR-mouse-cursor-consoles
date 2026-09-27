@@ -10,8 +10,8 @@ Final prompt:
 > Create a square, high-contrast placeholder preview image for a game mod test build. Use a clean, solid dark background and very large bold white uppercase sans-serif lettering centered in two lines. The exact text must be "TEST." on the first line and "NOT READY." on the second line, with both periods included. Generous safe margins, perfectly legible at thumbnail size. Flat graphic design. No additional words, logos, pictures, gradients, or decoration.
 
 The image is referenced by `metadata.lua` and included in local deployment.
-Runtime code, debug flags and load order are unchanged; canonical version remains
-2 because this changes publishing artwork only. Protected/game files were not
+At the time the artwork was added, runtime code, debug flags and load order were
+unchanged and canonical version remained 2. Protected/game files were not
 modified. No new game session or runtime log review was needed for this asset.
 The short description and native publishing-package check are now complete;
 see [publishing validation](PUBLISHING.md). This image does not certify console

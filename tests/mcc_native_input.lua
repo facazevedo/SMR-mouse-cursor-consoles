@@ -37,6 +37,7 @@ CreateRealTimeThread(function()
         end
         window = XWindow:new({
             Dock = "box", HandleMouse = true, ZOrder = 500000,
+            MouseCursor = const.DefaultMouseCursor,
             OnMouseButtonDown = receive("down"), OnMouseButtonUp = receive("up"),
             OnMouseButtonDoubleClick = receive("double"),
             OnMouseWheelForward = receive("wheel_up"), OnMouseWheelBack = receive("wheel_down"),
@@ -92,6 +93,7 @@ CreateRealTimeThread(function()
         tap("LeftShoulder"); tap("RightShoulder")
         check(received[5] and received[5].event == "wheel_up" and received[6].event == "wheel_down", "wheel events reach native UI")
         button("OnXButtonDown", "ButtonB")
+        local remembered_position = m.position
         tap("RightThumbClick")
         check(not m.active and not m.cursor, "same toggle destroys cursor")
         check(received[7] and received[7].event == "down" and received[7].button == "R" and received[8].event == "up", "toggle releases held right click")
@@ -99,6 +101,7 @@ CreateRealTimeThread(function()
         check(#received == 8, "post-toggle release does not leak")
         check(GetUIStyle() == original_style and hr.XBoxLeftThumbLocked == original_left and hr.XBoxRightThumbLocked == original_right, "native style and camera counters restored")
         tap("RightThumbClick")
+        check(m.position == remembered_position, "toggle resumes remembered cursor position")
         fake_input.CurrentState[0].LeftTrigger = 255
         Sleep(40)
         Msg("OnXInputControllerDisconnected", 0)

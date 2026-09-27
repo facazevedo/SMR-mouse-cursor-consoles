@@ -1,5 +1,28 @@
 # Test-build publishing validation
 
+## Current: version 3
+
+The settings update is prepared for upload as a test build. See
+[settings implementation and validation](SETTINGS.md) for the new behavior and
+console test checklist. It has not been uploaded to a mod store.
+
+- Required metadata and the existing 421,009-byte preview passed native checks.
+- Native `AsyncPack` produced a **433,963-byte** `ModContent.fpk`; `AsyncUnpack`
+  recovered all **11 files**, SHA-256 identical to the current repository payload.
+- Package SHA-256:
+  `CCE1D05B3DD7AB91D9565A9802D5D5E150D7E8026B7C4DEE02FCF58FEC6441B5`.
+- Local package/report/hash evidence: `tests/results/package-v3-final-20260927/`.
+- Both manifests contain eight ordered code modules; items.lua additionally
+  registers the 15 settings. Tests, docs, tooling and instruction files are excluded.
+- Syntax, 120 host checks and 49 native checks passed. Physical consoles and
+  store acceptance remain untested. The test preview and description remain in place.
+
+Upload the deployed mod through the game's Mod Editor while signed in to Paradox.
+The editor builds its own package. The verification above uses the same native
+packer directly; it does not perform authentication or network publication.
+
+## Historical: version 2
+
 Checked on 2026-09-27 using Windows MarsDebug.exe, Lua revision 405907.
 Version **2** is prepared for upload as a test build. No Paradox upload was made;
 account authentication, store acceptance and console execution are unverified.

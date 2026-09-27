@@ -1,7 +1,7 @@
 # Mouse Cursor Consoles
 
 A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor and
-temporarily uses the PC interface. Current release: metadata version **2**.
+temporarily uses the PC interface. Current release: metadata version **3**.
 
 | Action | PS5 | Xbox Series X/S |
 | --- | --- | --- |
@@ -17,13 +17,14 @@ temporarily uses the PC interface. Current release: metadata version **2**.
 Activate the mod and press R3 on any interactive game screen, including the first
 main menu with Tutorial, New Game and Load Game. No colony needs to be loaded.
 A second press of the same toggle restores the previous control style. The cursor starts in the
-screen center each time. The right stick does not move it. Both native camera
+screen center on first activation and remembers its last position within the session
+by default. Disable Remember cursor position to recenter on every activation. The right stick does not move it. Both native camera
 sticks are locked while mouse mode is active; move to the screen edge for the
 game's PC camera behavior. Other controller actions are suppressed in mouse mode
 to avoid triggering both a mouse action and its original controller action.
 
-Hold L2 / LT while moving the left stick to move 2.5 times faster. Release it
-to return to normal speed on the next frame. This is a hold modifier, not a
+By default, hold L2 / LT while moving the left stick to move 2.5 times faster. Release it
+to return to normal speed (optional smoothing makes the transition gradual). This is a hold modifier, not a
 toggle; it does not change click or wheel behavior. It has no effect outside
 mouse mode. Holding it before entering mouse mode also enables the boost.
 
@@ -43,7 +44,7 @@ shortcuts are outside this mod's mouse bindings.
 For local Windows testing, run `powershell -File tools/deploy.ps1` from this
 project (Lua 5.4 `luac` must be on PATH), then enable **Mouse Cursor Consoles** in
 the game mod manager. The script installs only `metadata.lua`, `items.lua`, and
-the six files under `Code/`, and `Images/test-not-ready.png` into
+the eight files under `Code/`, and `Images/test-not-ready.png` into
 `%APPDATA%/Surviving Mars Relaunched/Mods/MouseCursorConsoles`.
 It verifies file hashes and does not delete destination files.
 
@@ -53,28 +54,66 @@ publication was performed. Paradox advertises cross-platform mod support on the
 [official game page](https://www.paradoxinteractive.com/games/surviving-mars-relaunched/about),
 but that does not certify this particular code mod on either console.
 
-Version 2 is prepared for upload as a **TEST BUILD - NOT READY** release. Required
+Version 3 is prepared for upload as a **TEST BUILD - NOT READY** release. Required
 metadata and the preview are present; a native `.fpk` package was built, unpacked,
-and verified against all nine source files. See [publishing validation](docs/PUBLISHING.md).
+and verified against all eleven source files. See [publishing validation](docs/PUBLISHING.md).
 Use the Mod Editor's Paradox upload action while signed in to publish the deployed
 mod. Store acceptance and console functionality still require verification.
 
-Edit `Code/mcc_config.lua` for bindings, speed, dead zone, double-click timing,
-`ENABLE_MOUSE_MODE`, `DEBUG_LOGS`, and `DEBUG_INPUT`. Debug flags default to the
-boolean `false`; input diagnostics require both debug flags to be exactly `true`.
-Redeploy and reload the mod after editing. Bindings must be distinct engine
-button names. Logging covers API/configuration failures, registration, toggles,
-restoration reasons, input dispatch, and override ownership conflicts.
+## Cursor settings
 
-Speed boost settings are `ENABLE_SPEED_BOOST=true`,
-`SPEED_BOOST_BUTTON="LeftTrigger"`, and `CURSOR_BOOST_PERCENT=250`. The percentage
-must be an integer from 101 to 1000 (250 means 2.5x). Boost transitions log only
-when both `DEBUG_LOGS` and `DEBUG_INPUT` are exactly `true`.
+Enable the mod, then open **Options > Mod Options > Mouse Cursor Consoles**.
+The page uses the game's gold slider bars and supports controller navigation
+with mouse mode off. Opening it switches mouse mode off and releases held clicks;
+press your configured toggle again after closing settings to resume.
+
+The basic page has **Normal cursor speed**, **Fast cursor speed**, and **Cursor
+size %**, plus **Test cursor**, **Advanced settings**, **Reset to defaults**,
+**Apply and close**, and **Cancel**. D-pad Up/Down selects a row; Left/Right adjusts
+a slider or choice. Mouse dragging works on sliders too. Fast speed is an absolute
+speed and must be at least normal speed, not a fixed multiplier.
+
+| Slider | Range | Default |
+| --- | --- | --- |
+| Normal speed (pixels/sec at 1080p) | 50-4,000 | 900 |
+| Fast speed (pixels/sec at 1080p) | 50-8,000 | 2,250 |
+| Cursor size | 50-300% | 100% |
+| Stick dead zone (out of 32,767) | 0-16,000 | 6,000 |
+| Smoothing | 0-150 ms | 0 (off) |
+
+**Advanced** adds the dead-zone and smoothing sliders, Linear/Gradual stick
+response, White/Yellow/Cyan cursor tint, Remember cursor position, and all seven
+button bindings. Gradual response makes small movements finer without changing
+full-stick speed. Smoothing softens changes in velocity but adds delay; releasing
+inside the dead zone stops immediately. Every binding must be distinct. Trigger
+bindings are supported for the hold-to-boost action only. The toggle is restricted
+to L3/R3 stick clicks so normal menu navigation remains available. Native construction
+modifiers (multiple placement/show range) are not emulated by these mouse bindings.
+
+Select **Test cursor** to move an isolated preview with the left stick and your
+boost button. Circle/B or Escape returns to settings. Preview size/color changes
+appear immediately; changes affect the real cursor only after Apply. A connected
+controller is required for movement testing, but not for editing the sliders.
+Cancel discards the draft. Reset restores draft defaults; Apply saves them.
+
+Preferences use the game's supported per-mod persistent storage and survive
+restarts. Cursor coordinates are transient and are never written into colony saves.
+The reported Xbox jumping is **not diagnosed or claimed fixed** by these controls.
+Console testing of the settings and original gameplay checklist remains necessary.
+
+Developer-only feature/debug flags remain in `Code/mcc_config.lua`:
+`ENABLE_MOUSE_MODE=true`, `ENABLE_SPEED_BOOST=true`, `DEBUG_LOGS=false`,
+`DEBUG_INPUT=false`. Input diagnostics require both debug flags to be exactly
+`true`. Settings logging reports validation, apply/save and dialog lifecycle;
+no unconditional runtime logging is added. Use the settings page for user
+preferences; native option defaults are registered in `items.lua`.
 
 ## Ownership and restoration
 
 - `mcc_config.lua`: configuration and transient state in the mod environment.
 - `mcc_debug.lua`: explicit boolean-gated diagnostics.
+- `mcc_settings.lua`: validation and versioned per-mod preferences.
+- `mcc_settings_ui.lua`: native settings entry, draft UI and isolated live preview.
 - `mcc_cursor.lua`: left-stick movement, software cursor, mouse-position query override.
 - `mcc_input.lua`: input ownership, paired clicks, doubles, wheel repeats and toggle.
 - `mcc_lifecycle.lua`: validation, apply/restore, input registration and removal.
@@ -82,7 +121,7 @@ when both `DEBUG_LOGS` and `DEBUG_INPUT` are exactly `true`.
 
 `metadata.lua` is the canonical version and runtime load order; `items.lua`
 contains the identical editor registration order. There are no external mod
-dependencies, bundled libraries, or persistent save variables. The publishing
+dependencies, bundled libraries, or colony-save variables. Preferences use mod storage. The publishing
 preview is `Images/test-not-ready.png`, displaying "TEST. NOT READY.".
 The cursor uses the game's existing cursor images and rollover system.
 
@@ -103,10 +142,14 @@ Buttons held across a toggle must be released before producing a new mouse click
 
 ## Verification
 
-Run `lua tests/mcc_behavior.lua` for deterministic host checks. Native test helpers
-under `tests/` are for a disposable Windows debug-game process using the local
+Run `lua tests/mcc_settings_behavior.lua` for both deterministic host suites. Native test helpers
+under `tests/` cover input, settings and the native Mod Options entry in a disposable Windows debug-game process using the local
 `smr-harness`; they are excluded from the payload. See
 [validation evidence and source references](docs/VALIDATION.md).
+
+Also verify controller navigation, slider dragging, preview movement/boost, Advanced
+scrolling, Reset, Cancel, conflicting bindings, and preference persistence after
+a full restart on each console. See [settings validation](docs/SETTINGS.md).
 
 Before promoting the test build to a stable release, perform these checks
 separately on PS5 and Xbox Series X/S:
