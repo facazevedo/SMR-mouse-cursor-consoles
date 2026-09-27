@@ -1,5 +1,11 @@
 # Validation record
 
+## Version 4: Controls menu entry
+
+Options > Controls now contains Mouse Cursor Consoles as its first row. See
+[settings validation](SETTINGS.md) for the menu-visibility fix, 136 host checks,
+39 native menu/settings checks, deployment and remaining manual checks.
+
 ## Version 3: settings and cursor tuning
 
 See [settings validation](SETTINGS.md) for 120 passing host checks, 49 passing

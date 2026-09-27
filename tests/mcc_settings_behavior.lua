@@ -8,6 +8,11 @@ local function options(values)
         SetProperty = function(_, key, value) values[key] = value end }
 end
 local defaults = copy(M.SettingDefaults)
+local metadata = dofile("metadata.lua")
+check(type(metadata.default_options) == "table", "Metadata must advertise native option defaults")
+for _, key in ipairs(M.SettingKeys) do
+    check(metadata.default_options[key] == defaults[key], "Metadata/config default mismatch: " .. key)
+end
 local definitions = {}
 for _, item in ipairs(dofile("items.lua")) do
     if item.DefaultValue ~= nil then definitions[item.name] = item end

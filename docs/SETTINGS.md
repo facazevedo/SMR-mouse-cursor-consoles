@@ -1,6 +1,6 @@
-# Version 3: cursor settings
+# Version 4: cursor settings
 
-Entry point: **Options > Mod Options > Mouse Cursor Consoles**, while the mod is
+Entry point: **Options > Controls > Mouse Cursor Consoles**, while the mod is
 enabled. Continuous values use the game's `PropNumber` control, including the
 same gold bar/thumb artwork as the normal Controls screen.
 
@@ -16,9 +16,12 @@ available for the polled boost modifier only. The README documents ranges/defaul
   cursor styling. Preferences use `CurrentModStorageTable.settings`, schema 1,
   written with the supported `WriteModPersistentStorageTable` API. No direct
   account-storage access is attempted by the deployed mod.
-- `mcc_settings_ui.lua` owns the modal and draft. `DialogSetMode` opens it for this
-  mod's native entry only. No vanilla method/class is overridden for the settings
-  page. The native option items remain registered so the mod appears in Mod Options.
+- `mcc_settings_ui.lua` owns the modal and draft. `XWindowRecreated` adds a native
+  menu button at the top of the Controls list before its selection index is rebuilt.
+  Only lists inside an OptionsDlg in the Controls category are extended. Rebuilding
+  creates exactly one row; shutdown and parent closure clear mod-owned entries.
+  No vanilla method/class is overridden. `DialogSetMode` retains the existing
+  Mod Options route. Both routes open the same settings and preferences.
 - The actual cursor and test area share the same velocity calculation. Preview
   input never moves the game's mouse or dispatches clicks into the underlying UI.
 - Opening settings releases held clicks and exits mouse mode, restoring its prior
@@ -37,7 +40,7 @@ available for the polled boost modifier only. The README documents ranges/defaul
 - Pending-open threads and open settings modals are cleaned up on shutdown/reload.
   Parent closure removes the modal; focus loss exits preview testing.
 
-Version in `metadata.lua` is **3**. Both manifests load eight code files in the same
+Version in `metadata.lua` is **4**. Both manifests load eight code files in the same
 order, with settings data before the cursor and settings UI before entry hooks.
 `items.lua` also registers 15 native option definitions. Deployment has 11 files.
 
@@ -46,7 +49,53 @@ cover validation, loading, save errors/requests, applied values, and dialog life
 they use the existing debug gate. There is no unconditional mod debug output.
 No original cursor artwork or TEST. NOT READY. preview image was changed.
 
-## Verification performed (2026-09-27)
+## Version 4 verification (2026-09-27)
+
+The missing menu in version 3 was caused by absent `metadata.default_options`:
+native `ModDef:HasOptions()` and `HasModsWithOptions()` use that table to decide
+whether to expose Mod Options. The previous entry test jumped directly to
+`mod_choice`, bypassing the hidden category. Version 4 provides all 15 defaults
+and adds the requested Controls route. No cursor motion or binding behavior changed.
+
+- Syntax checks passed for every payload and test Lua file.
+- Host checks: 81 behavior checks and 55 preference/motion checks passed. The new
+  metadata/default contract failed against version 3 before the metadata fix.
+- Native Windows engine: 18 entry checks passed, starting from the Options root,
+  including Controls placement, controller confirm/back/focus return, rebuilds,
+  shutdown/reinstallation, parent cleanup and the legacy Mod Options route.
+- Native settings: all 21 slider, preview, validation and persistence checks passed.
+  The test now explicitly binds its simulated controller to slot 0 in the mod
+  environment and restores the previous value; the real active controller was 4.
+  An initial fixture run incorrectly mixed that real slot with simulated slot 0.
+- Main-menu Controls rendering was inspected using the real PGMainMenu Options
+  mode, rather than overlaying a standalone OptionsDlg on the main menu.
+- All 11 deployed files were hash-verified. Native packaging/unpacking matched
+  all 11 source files. No store upload was performed; see PUBLISHING.md.
+- Production changes are confined to metadata, settings UI, and the shutdown
+  cleanup call. Controller motion, input mappings, assets and saved schema are unchanged.
+- New `controls_entry_added` and `controls_entries_removed` diagnostics use the
+  existing exact-boolean `DEBUG_LOGS` gate (default false). `DEBUG_INPUT` is unchanged.
+- Read-only engine references: CommonLua/X/XDef.lua (`XWindowRecreated` timing),
+  XWindow.lua (child sorting), XDialog.lua, CommonLua/Modding/Mod.lua,
+  Lua/XDef/OptionsContentWindow.generated.lua, OptionsDlg.generated.lua,
+  MenuEntrySmall.generated.lua and Lua/XTemplates/PGMainMenu.lua.
+- Reviewed retail logs from 19:31 and 19:38 and debug daemon log 234357. The retail
+  session loaded v3; its SuperBigMap terrain error is unrelated. Debug test-fixture
+  errors were corrected (controller slot and package-output setup). Logs were retained.
+- Repeated both native suites in a fresh owned debug process. All 39 checks passed;
+  `MarsDebug.exe-20260927-19.47.49-6aad2de6.log` and daemon log 234749 contained
+  no Lua errors or assertion failures through the final UI captures. The owned
+  test process was stopped afterward; no user game process was stopped.
+- Game installation, harness source, third-party mods and original assets were
+  not edited. AGENTS.md and CLAUDE.md remain excluded from Git and deployment.
+- Physical-controller operation, PS5/Xbox rendering and in-colony/save-load
+  gameplay remain manual checks; Windows simulated-input tests do not certify them.
+
+Manual check: restart with v4 enabled, open Options > Controls, select Mouse Cursor
+Consoles, adjust a speed with D-pad Left/Right, choose Test cursor, then Apply.
+Reopen to verify persistence; Circle/B should return to Controls. Repeat in a colony.
+
+## Historical version 3 verification (2026-09-27)
 
 - Lua 5.4 syntax checks passed for all payload files and test helpers.
 - Host suites: **81 input/lifecycle checks + 39 preference/motion checks** passed.

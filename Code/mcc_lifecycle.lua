@@ -154,6 +154,7 @@ end
 
 function M.Shutdown(reason)
     if M.CloseSettings then M.CloseSettings(reason) end
+    if M.RemoveSettingsEntries then M.RemoveSettingsEntries() end
     M.RestoreVanillaBehavior(reason)
     if M.input then terminal.RemoveTarget(M.input); M.input = nil end
     M.held, M.swallowed = {}, {}

@@ -1,6 +1,19 @@
 # Test-build publishing validation
 
-## Current: version 3
+## Current: version 4
+
+The Controls-menu update is deployed locally and prepared as a test build; it has
+not been uploaded to a mod store. See [settings validation](SETTINGS.md).
+
+- Native pack/unpack: **435,224 bytes**, **11 files**, all SHA-256 identical to source.
+- Package SHA-256: `43834E31BF32126DBCCEF00EF01F689571049BBB9ACCF93E9191E826F2469992`.
+- Local evidence: `tests/results/package-v4-20260927/`.
+- Lua syntax, 136 host checks and 39 native menu/settings checks passed.
+- Metadata version 4 includes the 15 option defaults required for native menu
+  visibility. Eight code modules and the existing test-preview image are included.
+- Store acceptance and physical console operation remain unverified.
+
+## Historical: version 3
 
 The settings update is prepared for upload as a test build. See
 [settings implementation and validation](SETTINGS.md) for the new behavior and

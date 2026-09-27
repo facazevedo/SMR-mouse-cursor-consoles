@@ -1,6 +1,7 @@
--- A mod-owned modal, reached through the game's Mod Options entry.
+-- A mod-owned modal, reached through Options > Controls.
 -- Reuses the vanilla PropNumber slider; no shared classes are patched.
 local M = MCC
+M.settings_entries = {}
 DefineClass.MCCSettingsDialog = {
     __parents = { "XDialog" },
     Id = "idMCCSettings", IdNode = true, IsModal = true,
@@ -202,6 +203,40 @@ function M.CloseSettings(reason)
     if M.settings_dialog then M.settings_dialog:Close(reason) end
 end
 
+-- XContentTemplate emits this after creating rows and before XContentList
+-- rebuilds its selection index. Add our row on each rebuild, without replacing
+-- any vanilla method or changing the native Controls properties.
+function OnMsg.XWindowRecreated(list)
+    if not M.input or not IsKindOf(list, "XContentList") then return end
+    local host = GetParentOfKind(list, "XDialog")
+    if not host or not GetParentOfKind(host, "OptionsDlg") then return end
+    local category = GetDialogModeParam(list)
+    if host.Mode ~= "properties" or type(category) ~= "table" or category.id ~= "Controls" then return end
+    if list:ResolveId("idMCCControlsEntry") then return end
+    for entry in pairs(M.settings_entries) do
+        if entry.window_state == "destroying" then M.settings_entries[entry] = nil end
+    end
+    local entry = MenuEntrySmall:new({
+        Id = "idMCCControlsEntry", ZOrder = -1, Margins = box(18, 0, 0, 0),
+        Text = Untranslated("Mouse Cursor Consoles"), TextStyle = "PropName",
+        OnPress = function() M.OpenSettings(host) end,
+    }, list)
+    M.settings_entries[entry] = host
+    list:SortChildren()
+    entry:Open()
+    M.Log("SettingsUI", "controls_entry_added", {})
+end
+
+function M.RemoveSettingsEntries(host)
+    for entry, owner in pairs(M.settings_entries) do
+        if not host or owner == host or GetParentOfKind(owner, "OptionsDlg") == host then
+            M.settings_entries[entry] = nil
+            if entry.window_state ~= "destroying" then entry:delete() end
+        end
+    end
+    M.Log("SettingsUI", "controls_entries_removed", { all = host == nil })
+end
+
 function OnMsg.DialogSetMode(dialog, mode, context)
     if mode ~= "mod_options" or context ~= CurrentModDef then return end
     -- Wait until the native page has finished rebuilding, then show our modal.
@@ -215,4 +250,5 @@ end
 
 function OnMsg.DialogClose(dialog)
     if M.settings_dialog and M.settings_dialog.settings_host == dialog then M.CloseSettings("parent_closed") end
+    M.RemoveSettingsEntries(dialog)
 end

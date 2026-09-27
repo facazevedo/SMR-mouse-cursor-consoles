@@ -6,6 +6,7 @@ CreateRealTimeThread(function()
     local mod, original_style = Mods.MouseCursorConsoles, GetUIStyle()
     local env, m = mod.env, mod.env.MCC
     local original_input = rawget(env, "XInput")
+    local original_controller = rawget(env, "ActiveController")
     local saved = AccountStorage.ModPersistentData and AccountStorage.ModPersistentData[mod.id]
     local saved_table = env.CurrentModStorageTable.settings
     local original_options = m.ReadSettings(mod.options)
@@ -22,6 +23,7 @@ CreateRealTimeThread(function()
             return type(value) == "number" and value >= XInput.GetButtonTreshold(key)
         end
         rawset(env, "XInput", fake)
+        rawset(env, "ActiveController", 0)
         ChangeGamepadUIStyle({ [1] = "gamepad" })
         local dlg = m.OpenSettings()
         Sleep(150)
@@ -90,6 +92,7 @@ CreateRealTimeThread(function()
     if AccountStorage.ModPersistentData then AccountStorage.ModPersistentData[mod.id] = saved end
     SaveAccountStorage(100)
     rawset(env, "XInput", original_input)
+    rawset(env, "ActiveController", original_controller)
     ChangeGamepadUIStyle({ [1] = original_style })
     report.status = report.failed and "failed" or "passed"
 end)
