@@ -13,5 +13,6 @@ The image is referenced by `metadata.lua` and included in local deployment.
 Runtime code, debug flags and load order are unchanged; canonical version remains
 2 because this changes publishing artwork only. Protected/game files were not
 modified. No new game session or runtime log review was needed for this asset.
-The missing short description and final publishing-package check remain separate
-publishing tasks; this image does not certify console compatibility.
+The short description and native publishing-package check are now complete;
+see [publishing validation](PUBLISHING.md). This image does not certify console
+compatibility.

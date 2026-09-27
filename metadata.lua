@@ -2,6 +2,7 @@ return PlaceObj('ModDef', {
     'title', "Mouse Cursor Consoles",
     'id', "MouseCursorConsoles",
     'author', "fredware",
+    'short_description', "TEST BUILD - NOT READY. Toggle a left-stick mouse cursor with R3; hold L2/LT for faster movement. PS5 and Xbox Series testing required.",
     'image', "Mod/MouseCursorConsoles/Images/test-not-ready.png",
     'version', 2,
     'lua_revision', 350453,

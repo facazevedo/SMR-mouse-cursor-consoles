@@ -53,6 +53,12 @@ publication was performed. Paradox advertises cross-platform mod support on the
 [official game page](https://www.paradoxinteractive.com/games/surviving-mars-relaunched/about),
 but that does not certify this particular code mod on either console.
 
+Version 2 is prepared for upload as a **TEST BUILD - NOT READY** release. Required
+metadata and the preview are present; a native `.fpk` package was built, unpacked,
+and verified against all nine source files. See [publishing validation](docs/PUBLISHING.md).
+Use the Mod Editor's Paradox upload action while signed in to publish the deployed
+mod. Store acceptance and console functionality still require verification.
+
 Edit `Code/mcc_config.lua` for bindings, speed, dead zone, double-click timing,
 `ENABLE_MOUSE_MODE`, `DEBUG_LOGS`, and `DEBUG_INPUT`. Debug flags default to the
 boolean `false`; input diagnostics require both debug flags to be exactly `true`.
@@ -102,7 +108,8 @@ under `tests/` are for a disposable Windows debug-game process using the local
 `smr-harness`; they are excluded from the payload. See
 [validation evidence and source references](docs/VALIDATION.md).
 
-Before publishing, perform these checks separately on PS5 and Xbox Series X/S:
+Before promoting the test build to a stable release, perform these checks
+separately on PS5 and Xbox Series X/S:
 
 1. Enable the mod, press R3 on the first Tutorial / New Game / Load Game menu,
    and confirm the cursor works there and in setup screens. Start a colony and
