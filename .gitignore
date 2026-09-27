@@ -2,3 +2,5 @@
 .state/
 tests/results/
 *.luac
+AGENTS.md
+CLAUDE.md
