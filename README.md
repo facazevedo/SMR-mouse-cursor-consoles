@@ -43,7 +43,8 @@ shortcuts are outside this mod's mouse bindings.
 For local Windows testing, run `powershell -File tools/deploy.ps1` from this
 project (Lua 5.4 `luac` must be on PATH), then enable **Mouse Cursor Consoles** in
 the game mod manager. The script installs only `metadata.lua`, `items.lua`, and
-the six files under `Code/` into `%APPDATA%/Surviving Mars Relaunched/Mods/MouseCursorConsoles`.
+the six files under `Code/`, and `Images/test-not-ready.png` into
+`%APPDATA%/Surviving Mars Relaunched/Mods/MouseCursorConsoles`.
 It verifies file hashes and does not delete destination files.
 
 PS5/Xbox distribution needs the game's supported publishing/Paradox Mods path;
@@ -75,7 +76,8 @@ when both `DEBUG_LOGS` and `DEBUG_INPUT` are exactly `true`.
 
 `metadata.lua` is the canonical version and runtime load order; `items.lua`
 contains the identical editor registration order. There are no external mod
-dependencies, bundled libraries, new image assets, or persistent save variables.
+dependencies, bundled libraries, or persistent save variables. The publishing
+preview is `Images/test-not-ready.png`, displaying "TEST. NOT READY.".
 The cursor uses the game's existing cursor images and rollover system.
 
 The one function override, `terminal.GetMousePos`, returns the current software

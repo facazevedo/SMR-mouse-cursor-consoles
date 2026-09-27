@@ -2,6 +2,7 @@ return PlaceObj('ModDef', {
     'title', "Mouse Cursor Consoles",
     'id', "MouseCursorConsoles",
     'author', "fredware",
+    'image', "Mod/MouseCursorConsoles/Images/test-not-ready.png",
     'version', 2,
     'lua_revision', 350453,
     'saved_with_revision', 405907,

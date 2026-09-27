@@ -6,10 +6,13 @@ $destination = [IO.Path]::GetFullPath((Join-Path $modsRoot $modId))
 if ((Split-Path -Parent $destination) -ne [IO.Path]::GetFullPath($modsRoot)) {
     throw "Deployment escaped Mods directory: $destination"
 }
-$payload = @('metadata.lua', 'items.lua') + @(Get-ChildItem (Join-Path $projectRoot 'Code') -File -Filter '*.lua' | ForEach-Object { 'Code/' + $_.Name })
+$payload = @('metadata.lua', 'items.lua', 'Images/test-not-ready.png') + @(Get-ChildItem (Join-Path $projectRoot 'Code') -File -Filter '*.lua' | ForEach-Object { 'Code/' + $_.Name })
 foreach ($relative in $payload) {
-    & luac -p (Join-Path $projectRoot $relative)
-    if ($LASTEXITCODE -ne 0) { throw "Syntax check failed: $relative" }
+    if (!(Test-Path -LiteralPath (Join-Path $projectRoot $relative) -PathType Leaf)) { throw "Missing payload file: $relative" }
+    if ($relative.EndsWith('.lua')) {
+        & luac -p (Join-Path $projectRoot $relative)
+        if ($LASTEXITCODE -ne 0) { throw "Syntax check failed: $relative" }
+    }
 }
 if (Test-Path -LiteralPath $destination) {
     if ((Get-Item -LiteralPath $destination).Attributes -band [IO.FileAttributes]::ReparsePoint) {
@@ -34,6 +37,7 @@ New-Item -ItemType Directory -Path (Join-Path $destination 'Code') -Force | Out-
 foreach ($relative in $payload) {
     $source = Join-Path $projectRoot $relative
     $target = Join-Path $destination $relative
+    New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
     Copy-Item -LiteralPath $source -Destination $target -Force
     if ((Get-FileHash -LiteralPath $source).Hash -ne (Get-FileHash -LiteralPath $target).Hash) {
         throw "Deployment hash mismatch: $relative"
