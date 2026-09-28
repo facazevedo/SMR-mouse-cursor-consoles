@@ -1,4 +1,4 @@
-# Version 4: cursor settings
+# Version 5: cursor settings
 
 Entry point: **Options > Controls > Mouse Cursor Consoles**, while the mod is
 enabled. Continuous values use the game's `PropNumber` control, including the
@@ -20,8 +20,8 @@ available for the polled boost modifier only. The README documents ranges/defaul
   menu button at the top of the Controls list before its selection index is rebuilt.
   Only lists inside an OptionsDlg in the Controls category are extended. Rebuilding
   creates exactly one row; shutdown and parent closure clear mod-owned entries.
-  No vanilla method/class is overridden. `DialogSetMode` retains the existing
-  Mod Options route. Both routes open the same settings and preferences.
+  No vanilla method/class is overridden. There is no general Mod Options entry;
+  the Controls page uses a private PropertyObject draft with the same 15 properties.
 - The actual cursor and test area share the same velocity calculation. Preview
   input never moves the game's mouse or dispatches clicks into the underlying UI.
 - Opening settings releases held clicks and exits mouse mode, restoring its prior
@@ -37,19 +37,52 @@ available for the polled boost modifier only. The README documents ranges/defaul
 - Remembered position is enabled by default and lasts within the running mod
   session. It is clamped/scaled to the display on reactivation. Coordinates and
   UI objects are never persisted in colony saves.
-- Pending-open threads and open settings modals are cleaned up on shutdown/reload.
+- Open settings modals and Controls entries are cleaned up on shutdown/reload.
   Parent closure removes the modal; focus loss exits preview testing.
 
-Version in `metadata.lua` is **4**. Both manifests load eight code files in the same
+Version in `metadata.lua` is **5**. Both manifests load eight code files in the same
 order, with settings data before the cursor and settings UI before entry hooks.
-`items.lua` also registers 15 native option definitions. Deployment has 11 files.
+`items.lua` registers code only. Private property definitions belong to
+`mcc_settings.lua`; metadata advertises no generic options. Deployment has 11 files.
 
 `DEBUG_LOGS=false` and `DEBUG_INPUT=false` remain explicit booleans. Settings logs
 cover validation, loading, save errors/requests, applied values, and dialog lifecycle;
 they use the existing debug gate. There is no unconditional mod debug output.
 No original cursor artwork or TEST. NOT READY. preview image was changed.
 
-## Version 4 verification (2026-09-27)
+## Version 5 verification (2026-09-27)
+
+Removed native ModItemOption registrations, metadata defaults and the old
+DialogSetMode route. The same property definitions now belong to the Controls
+page. Drafts read validated runtime configuration, so the native loader clearing
+its empty option cache cannot reset the displayed preferences. Schema 1 storage
+and cursor motion, mappings, option ranges and artwork are unchanged.
+
+- Lua syntax passed for payload and test files; 81 behavior + 48 settings host
+  checks passed. All 14 native entry and 22 native settings checks passed, covering the unique Controls entry, absence
+  from the general mod list, controller confirm/back/focus, cleanup, sliders,
+  preview, persistence and resilience to native cache clearing.
+- References inspected read-only: Mod.lua (native list properties, defaults and
+  cache lifecycle), PropertyObject.lua and OptionsContentWindow.generated.lua.
+- Logs reviewed: retail Mars.exe-20260927-20.17.17-6aad2d75.log and debug daemon
+  20260928-002207.log (no Lua errors/assertion failures during the checks).
+  Logs retained; game/harness/third-party sources untouched.
+- Production files: metadata.lua, items.lua, mcc_settings.lua and mcc_settings_ui.lua.
+  Existing DEBUG_LOGS and DEBUG_INPUT boolean gates remain false; settings open,
+  close, validation, apply/save and Controls-entry diagnostics remain available.
+- All 11 payload files deployed and hash-verified. User game process was left alone.
+  AGENTS.md and CLAUDE.md remain excluded. Physical controller/console operation
+  and in-colony save/load remain unverified by these Windows simulated-input tests.
+
+Manual check: restart, verify only Options > Controls > Mouse Cursor Consoles
+opens these settings, change a slider, Apply, and reopen to confirm the value.
+
+Mouse Edge Scrolling is a vanilla PC option. ProjectOptions.lua registers it
+with FilterNonConsoleOption; Lua/Config/_fixup.lua returns not Platform.console.
+A controller attached to a PC does not make it a console build. The mod currently
+adds no equivalent console edge-scroll option; this update does not change that.
+
+## Historical version 4 verification (2026-09-27)
 
 The missing menu in version 3 was caused by absent `metadata.default_options`:
 native `ModDef:HasOptions()` and `HasModsWithOptions()` use that table to decide

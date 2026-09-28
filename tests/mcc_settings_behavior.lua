@@ -9,16 +9,15 @@ local function options(values)
 end
 local defaults = copy(M.SettingDefaults)
 local metadata = dofile("metadata.lua")
-check(type(metadata.default_options) == "table", "Metadata must advertise native option defaults")
-for _, key in ipairs(M.SettingKeys) do
-    check(metadata.default_options[key] == defaults[key], "Metadata/config default mismatch: " .. key)
+check(type(metadata.default_options) == "table" and next(metadata.default_options) == nil,
+    "Mod must not advertise general Mod Options")
+for _, item in ipairs(dofile("items.lua")) do
+    check(item.CodeFileName ~= nil, "Manifest must not register duplicate mod options")
 end
 local definitions = {}
-for _, item in ipairs(dofile("items.lua")) do
-    if item.DefaultValue ~= nil then definitions[item.name] = item end
-end
+for _, prop in ipairs(M.SettingProperties) do definitions[prop.id] = prop end
 for _, key in ipairs(M.SettingKeys) do
-    check(definitions[key] and definitions[key].DefaultValue == defaults[key], "Manifest/config default mismatch: " .. key)
+    check(definitions[key] and definitions[key].default == defaults[key], "Controls/config default mismatch: " .. key)
 end
 check(M.ValidateSettings(defaults), "Defaults must be valid")
 local cfg = copy(defaults)

@@ -1,5 +1,10 @@
 # Validation record
 
+## Version 5: Controls-only settings
+
+Removed the duplicate general Mod Options registration. The private Controls
+page keeps all 15 properties and existing storage; see [settings validation](SETTINGS.md).
+
 ## Version 4: Controls menu entry
 
 Options > Controls now contains Mouse Cursor Consoles as its first row. See

@@ -1,4 +1,4 @@
--- Start at Options, follow visible rows, and test both supported entry routes.
+-- Follow the Controls route and verify the general Mod Options route is absent.
 rawset(_G, "MCCNativeEntryReport", { status = "running", checks = {} })
 CreateRealTimeThread(function()
     local report = MCCNativeEntryReport
@@ -16,13 +16,12 @@ CreateRealTimeThread(function()
         local host = options[1]
         Sleep(150)
         local list = host:ResolveId("idList")
-        local controls, mod_options
+        local controls
         for _, row in ipairs(list) do
             if row.context.id == "Controls" then controls = row end
-            if row.context.id == "ModOptions" then mod_options = row end
         end
         check(controls ~= nil, "Options root exposes Controls")
-        check(mod_options ~= nil, "Options root exposes Mod Options through metadata defaults")
+        check(not Mods.MouseCursorConsoles:HasOptions(), "mod does not advertise a general Mod Options category")
         controls:OnPress()
         Sleep(150)
         list = host:ResolveId("idList")
@@ -61,42 +60,18 @@ CreateRealTimeThread(function()
         options = OptionsDlg:new({}, terminal.desktop)
         options:Open()
         host = options[1]
+        -- Inspect the shared list even if another enabled mod exposes it.
+        host:SetMode("mod_choice")
         Sleep(150)
         list = host:ResolveId("idList")
+        local duplicate
         for _, row in ipairs(list) do
-            if row.context.id == "ModOptions" then row:OnPress(); break end
+            if row.context == Mods.MouseCursorConsoles then duplicate = row end
         end
-        Sleep(150)
-        list = host:ResolveId("idList")
-        local entry
-        for _, row in ipairs(list) do
-            if row.context == Mods.MouseCursorConsoles then entry = row end
-        end
-        check(entry ~= nil, "native Mod Options lists Mouse Cursor Consoles")
-        entry:OnPress()
-        Sleep(150)
-        local dlg = m.settings_dialog
-        check(dlg and dlg.settings_host == host, "native entry opens dedicated settings page")
-        if not dlg then return end
-        dlg:Close("cancel")
-        check(not m.settings_dialog and host.Mode == "mod_choice", "cancel returns to mod list")
-        Sleep(150) -- native content lists rebuild on their own UI thread
-        list = host:ResolveId("idList")
-        for _, row in ipairs(list) do
-            if row.context == Mods.MouseCursorConsoles then row:OnPress(); break end
-        end
-        Sleep(150)
-        check(m.settings_dialog ~= nil, "settings reopen without duplicate dialogs")
-        m.settings_dialog:Close("cancel")
-        Sleep(150)
-        host:SetMode("mod_options", Mods.MouseCursorConsoles)
-        m.CloseSettings("cancel_pending_open")
-        Sleep(150)
-        check(not m.settings_dialog and not m.settings_pending_host, "cleanup cancels a pending settings-open thread")
-        host:SetMode("mod_options", Mods.MouseCursorConsoles)
-        Sleep(150)
-        options:Close()
-        check(not m.settings_dialog, "closing options parent removes settings modal")
+        check(not duplicate, "general Mod Options list has no Mouse Cursor Consoles entry")
+        check(next(Mods.MouseCursorConsoles.options:GetProperties()) == nil,
+            "private Controls properties do not leak into native Mod Options")
+
     end)
     if not ok then report.error = tostring(err); report.failed = true end
     m.CloseSettings("test_cleanup")

@@ -16,7 +16,7 @@ local function button(parent, text, action)
 end
 
 function MCCSettingsDialog:Init()
-    self.draft = CurrentModOptions:Clone()
+    self.draft = M.NewSettingsDraft()
     self.preview_motion = { x = 150000, y = 65000 }
     local panel = XWindow:new({ Id = "idPanel", HAlign = "center", VAlign = "center",
         MinWidth = 1000, MaxWidth = 1000, LayoutMethod = "VList", LayoutVSpacing = 8,
@@ -179,10 +179,6 @@ end
 
 function MCCSettingsDialog:Done(result)
     if M.settings_dialog == self then M.settings_dialog = nil end
-    local host = self.settings_host
-    if host and host.window_state ~= "destroying" and host.Mode == "mod_options" then
-        SetBackDialogMode(host)
-    end
     M.Log("SettingsUI", "closed", { result = result or "cleanup" })
 end
 
@@ -197,9 +193,6 @@ function M.OpenSettings(host)
 end
 
 function M.CloseSettings(reason)
-    local pending = M.settings_pending_host
-    M.settings_pending_host = nil
-    if pending and pending.window_state ~= "destroying" then pending:DeleteThread("MCCSettingsOpen") end
     if M.settings_dialog then M.settings_dialog:Close(reason) end
 end
 
@@ -235,17 +228,6 @@ function M.RemoveSettingsEntries(host)
         end
     end
     M.Log("SettingsUI", "controls_entries_removed", { all = host == nil })
-end
-
-function OnMsg.DialogSetMode(dialog, mode, context)
-    if mode ~= "mod_options" or context ~= CurrentModDef then return end
-    -- Wait until the native page has finished rebuilding, then show our modal.
-    M.settings_pending_host = dialog
-    dialog:CreateThread("MCCSettingsOpen", function()
-        WaitNextFrame()
-        M.settings_pending_host = nil
-        if dialog.window_state ~= "destroying" and dialog.Mode == mode then M.OpenSettings(dialog) end
-    end)
 end
 
 function OnMsg.DialogClose(dialog)

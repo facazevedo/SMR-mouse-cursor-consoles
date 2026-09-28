@@ -1,6 +1,18 @@
 # Test-build publishing validation
 
-## Current: version 4
+## Current: version 5
+
+Controls is now the only entry for this mod's settings. General Mod Options
+registration was removed without changing saved preferences or cursor behavior.
+
+- Lua syntax, 129 host checks and 36 native menu/settings checks passed.
+- Native pack/unpack: **435,210 bytes**, **11 files**, all hashes match source.
+- SHA-256: `5B76A7A79E52536B38D24F5E9B7D067362B7C970E27D9BDD7171E218DC4C0640`.
+- Local evidence: `tests/results/package-v5-20260927/`.
+- Deployed locally; no mod-store upload performed. Physical-console operation
+  remains unverified. Existing TEST BUILD - NOT READY preview retained.
+
+## Historical: version 4
 
 The Controls-menu update is deployed locally and prepared as a test build; it has
 not been uploaded to a mod store. See [settings validation](SETTINGS.md).

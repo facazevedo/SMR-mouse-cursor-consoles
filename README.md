@@ -1,7 +1,7 @@
 # Mouse Cursor Consoles
 
 A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor and
-temporarily uses the PC interface. Current release: metadata version **4**.
+temporarily uses the PC interface. Current release: metadata version **5**.
 
 | Action | PS5 | Xbox Series X/S |
 | --- | --- | --- |
@@ -54,7 +54,7 @@ publication was performed. Paradox advertises cross-platform mod support on the
 [official game page](https://www.paradoxinteractive.com/games/surviving-mars-relaunched/about),
 but that does not certify this particular code mod on either console.
 
-Version 4 is prepared for upload as a **TEST BUILD - NOT READY** release. Required
+Version 5 is prepared for upload as a **TEST BUILD - NOT READY** release. Required
 metadata and the preview are present; a native `.fpk` package was built, unpacked,
 and verified against all eleven source files. See [publishing validation](docs/PUBLISHING.md).
 Use the Mod Editor's Paradox upload action while signed in to publish the deployed
@@ -65,7 +65,8 @@ mod. Store acceptance and console functionality still require verification.
 Enable the mod, restart the game after installing an update, then open
 **Options > Controls > Mouse Cursor Consoles** (the first Controls row).
 This also works on PC with a connected controller, including a PS5 controller
-recognized by the game. The native Mod Options entry remains available too.
+recognized by the game. This is the only settings entry; the general Mod Options
+list does not include this mod.
 The page uses the game's gold slider bars and supports controller navigation
 with mouse mode off. Opening it switches mouse mode off and releases held clicks;
 press your configured toggle again after closing settings to resume.
@@ -109,7 +110,7 @@ Developer-only feature/debug flags remain in `Code/mcc_config.lua`:
 `DEBUG_INPUT=false`. Input diagnostics require both debug flags to be exactly
 `true`. Settings logging reports validation, apply/save and dialog lifecycle;
 no unconditional runtime logging is added. Use the settings page for user
-preferences; native option defaults are registered in `items.lua`.
+preferences; the private Controls-page definitions are in `mcc_settings.lua`.
 
 ## Ownership and restoration
 
@@ -146,7 +147,7 @@ Buttons held across a toggle must be released before producing a new mouse click
 ## Verification
 
 Run `lua tests/mcc_settings_behavior.lua` for both deterministic host suites. Native test helpers
-under `tests/` cover input, settings and the native Mod Options entry in a disposable Windows debug-game process using the local
+under `tests/` cover input, settings and the Controls entry in a disposable Windows debug-game process using the local
 `smr-harness`; they are excluded from the payload. See
 [validation evidence and source references](docs/VALIDATION.md).
 
