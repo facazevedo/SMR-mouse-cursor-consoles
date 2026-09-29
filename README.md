@@ -32,9 +32,4 @@ mouse mode. Holding it before entering mouse mode also enables the boost.
 including while mouse mode is off. Use the HUD's pause control, or configure a
 different toggle. Turning off the feature or unloading the mod restores R3 too.
 
-This is a console-targeted implementation, **not a console-tested release**.
-Windows engine tests used simulated controller input and a test UI. Physical
-PS5/Xbox controllers, console rendering, colony selection/construction, native
-camera scrolling, and save/reload gameplay still need the checks below. Exact
-parity with every PC interaction is not yet established. Text entry and keyboard
-shortcuts are outside this mod's mouse bindings.
+This is an unfinished console-targeted implementation, **not a console-tested release**.
