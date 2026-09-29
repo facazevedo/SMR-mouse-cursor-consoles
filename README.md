@@ -1,7 +1,6 @@
 # Mouse Cursor Consoles
 
-A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor and
-temporarily uses the PC interface. Current release: metadata version **5**.
+A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor on consoles.
 
 | Action | PS5 | Xbox Series X/S |
 | --- | --- | --- |
