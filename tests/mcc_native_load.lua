@@ -5,10 +5,12 @@ CreateRealTimeThread(function()
     rawset(_G, "MCCNativePreviousLoadMods", table.copy(AccountStorage.LoadMods or {}))
     AccountStorage.LoadMods = table.copy(MCCNativePreviousLoadMods)
     table.insert_unique(AccountStorage.LoadMods, "MouseCursorConsoles")
-    ProtectedModsReloadItems(nil, false)
+    ProtectedModsReloadItems(nil, true)
     AccountStorage.LoadMods = MCCNativePreviousLoadMods
     local mod = Mods.MouseCursorConsoles
-    local m = mod and mod.env.MCC
+    local deadline = RealTime() + 10000
+    while mod and not rawget(mod.env, "MCC") and RealTime() < deadline do Sleep(100) end
+    local m = mod and rawget(mod.env, "MCC")
     local valid, reason
     if m then valid, reason = m.Validate() end
     rawset(_G, "MCCNativeLoadReport", {

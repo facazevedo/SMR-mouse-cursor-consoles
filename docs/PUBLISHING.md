@@ -1,6 +1,14 @@
 # Test-build publishing validation
 
-## Current: version 5
+## Current: version 6 (local payload)
+
+The native Options layout update is deployed locally. Required metadata and the
+existing TEST BUILD - NOT READY image are retained. No v6 native package or store
+upload was produced for this UI change. Rebuild the package before publishing;
+the verified v5 package below contains the previous settings layout.
+See [settings validation](SETTINGS.md).
+
+## Historical: version 5
 
 Controls is now the only entry for this mod's settings. General Mod Options
 registration was removed without changing saved preferences or cursor behavior.

@@ -1,12 +1,12 @@
-# Version 5: cursor settings
+# Version 6: cursor settings
 
 Entry point: **Options > Controls > Mouse Cursor Consoles**, while the mod is
 enabled. Continuous values use the game's `PropNumber` control, including the
 same gold bar/thumb artwork as the normal Controls screen.
 
 The main view contains normal speed, absolute fast speed, cursor size, Test cursor,
-Advanced, Reset, Apply and Cancel. Advanced contains dead zone, response curve,
-smoothing, color, remembered position and seven distinct button bindings. Toggle
+Advanced, with Back, Default and Apply in the native bottom action bar. Advanced
+contains dead zone, response curve, smoothing, color, remembered position and seven distinct button bindings. Toggle
 choices are L3/R3 to keep ordinary menu navigation available. Analog triggers are
 available for the polled boost modifier only. The README documents ranges/defaults.
 
@@ -16,8 +16,12 @@ available for the polled boost modifier only. The README documents ranges/defaul
   cursor styling. Preferences use `CurrentModStorageTable.settings`, schema 1,
   written with the supported `WriteModPersistentStorageTable` API. No direct
   account-storage access is attempted by the deployed mod.
-- `mcc_settings_ui.lua` owns the modal and draft. `XWindowRecreated` adds a native
-  menu button at the top of the Controls list before its selection index is rebuilt.
+- `mcc_settings_ui.lua` owns a transparent child page and draft inside the
+  native Options shell. It reuses the shell safe margins, title and action-bar
+  classes, retaining the existing animated background. The original Controls
+  content, title and footer are hidden and folded while this page is open; their
+  prior visibility/folding and entry focus are restored on close. `XWindowRecreated`
+  adds a native menu button at the top of the Controls list before its selection index is rebuilt.
   Only lists inside an OptionsDlg in the Controls category are extended. Rebuilding
   creates exactly one row; shutdown and parent closure clear mod-owned entries.
   No vanilla method/class is overridden. There is no general Mod Options entry;
@@ -29,7 +33,8 @@ available for the polled boost modifier only. The README documents ranges/defaul
   page leaves mouse mode off; press the configured toggle to resume it.
 - Draft changes preview size/color and movement without changing gameplay.
   Invalid ranges, fast speed below normal, and duplicate bindings block Apply.
-  Cancel discards edits. Reset changes the draft; Apply is required to save.
+  Back from basic discards edits; Back from Advanced preserves the draft and
+  returns to basic. Default changes the draft; Apply is required to save.
 - Save failures report an error on the page and preserve previous settings.
   Unsupported or corrupt stored settings are rejected with boolean-gated diagnostics.
 - Smoothing is off by default. It filters velocity, not cursor position, and stops
@@ -40,7 +45,7 @@ available for the polled boost modifier only. The README documents ranges/defaul
 - Open settings modals and Controls entries are cleaned up on shutdown/reload.
   Parent closure removes the modal; focus loss exits preview testing.
 
-Version in `metadata.lua` is **5**. Both manifests load eight code files in the same
+Version in `metadata.lua` is **6**. Both manifests load eight code files in the same
 order, with settings data before the cursor and settings UI before entry hooks.
 `items.lua` registers code only. Private property definitions belong to
 `mcc_settings.lua`; metadata advertises no generic options. Deployment has 11 files.
@@ -50,7 +55,56 @@ cover validation, loading, save errors/requests, applied values, and dialog life
 they use the existing debug gate. There is no unconditional mod debug output.
 No original cursor artwork or TEST. NOT READY. preview image was changed.
 
-## Version 5 verification (2026-09-27)
+## Version 6 verification (2026-09-29)
+
+Replaced the centered opaque screen with a child page in the existing Options
+shell. The title reads OPTIONS / CONTROLS / MOUSE CURSOR CONSOLES; Advanced adds
+one more breadcrumb. Sliders retain native Controls alignment and spacing.
+The footer now owns Back/Default/Apply and their native controller shortcuts.
+This changes presentation/navigation only: cursor motion, bindings, preference
+validation, storage schema, and gameplay lifecycle are unchanged.
+
+- Lua 5.4 syntax checks passed for all payload and test files. The host suites
+  passed 81 behavior and 48 settings/motion checks.
+- The Windows debug engine passed 21 native entry checks and 22 native settings
+  checks: shared shell, transparency, breadcrumb, row alignment, native footer,
+  repeated open, restored visibility/focus, parent cleanup, preview, validation,
+  defaults, cancel, apply and persistence. Controller events/state were simulated.
+- Visually inspected the actual PGMainMenu Options route, basic page, Advanced,
+  and the bottom of the scrolling Advanced list. The Mars video remained visible
+  and animated across captures. Evidence is ignored under `tests/results/`.
+- An initial integration run caught reserved space from the hidden native title
+  and an incorrect focus lookup. The fix restores both visibility and folding
+  and resolves the return entry through its owning list. Subsequent checks pass.
+- The load helper now forces item reload after refreshing mod definitions and
+  waits for the new environment. Its earlier stale-environment test errors are
+  retained in the first debug log; they were test-fixture failures.
+- Read-only engine references: OptionsDlg, OptionsContentWindow, DialogTitleNew,
+  ActionBarNew, NewOverlayDlg and PropNumber generated definitions; XDialog,
+  XWindow, XDesktop, Mod.lua and PGMainMenu. No game, generated, harness or
+  third-party source was edited. Original assets and manifest load order remain
+  unchanged.
+- Existing boolean DEBUG_LOGS (false) gates `open_rejected`, page-open layout and
+  background information, `controls_restored` and close diagnostics. DEBUG_INPUT
+  remains false and unchanged.
+- Reviewed retail logs `Mars.exe-20260929-19.53.03-6aad2d75.log` and
+  `Mars.exe-20260929-19.51.45-6aad2d75.log`: v5 loaded, no relevant Lua error.
+  Reviewed the first debug session `MarsDebug.exe-20260929-19.58.20-6aad2de6.log`
+  for the fixture errors above. The final debug log
+  `MarsDebug.exe-20260929-20.05.21-6aad2de6.log` and harness log
+  `daemon-20260930-000520.log` contain no Lua errors or assertion failures through
+  the final checks and captures. Logs are retained; no deletion workflow is configured.
+- All 11 payload files were deployed and SHA-256 verified in the configured local
+  MouseCursorConsoles folder. No store upload or v6 package build was performed.
+
+Manual checks: restart the game and open Options > Controls > Mouse Cursor
+Consoles. Check the animated background and complete breadcrumb, adjust a slider,
+use Default and Apply, reopen to check persistence, then use Back twice through
+Advanced and verify focus returns to Controls. Repeat in a colony and on PS5/Xbox.
+Physical controllers, console rendering and in-colony/save-load behavior were
+not verified by this Windows menu test.
+
+## Historical version 5 verification (2026-09-27)
 
 Removed native ModItemOption registrations, metadata defaults and the old
 DialogSetMode route. The same property definitions now belong to the Controls

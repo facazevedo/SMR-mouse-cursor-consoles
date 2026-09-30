@@ -1,5 +1,12 @@
 # Validation record
 
+## Version 6: native Options layout
+
+Cursor settings now retain the native Options shell, animated background,
+breadcrumb and footer. Syntax, 129 host checks and 43 native UI/settings checks
+passed; basic and scrolling Advanced pages were visually reviewed in the Windows
+engine. See [settings validation](SETTINGS.md) for evidence and manual checks.
+
 ## Version 5: Controls-only settings
 
 Removed the duplicate general Mod Options registration. The private Controls

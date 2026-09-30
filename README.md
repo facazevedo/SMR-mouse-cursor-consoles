@@ -1,7 +1,7 @@
 # Mouse Cursor Consoles
 
 A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor and
-temporarily uses the PC interface. Current release: metadata version **5**.
+temporarily uses the PC interface. Current release: metadata version **6**.
 
 | Action | PS5 | Xbox Series X/S |
 | --- | --- | --- |
@@ -54,9 +54,9 @@ publication was performed. Paradox advertises cross-platform mod support on the
 [official game page](https://www.paradoxinteractive.com/games/surviving-mars-relaunched/about),
 but that does not certify this particular code mod on either console.
 
-Version 5 is prepared for upload as a **TEST BUILD - NOT READY** release. Required
-metadata and the preview are present; a native `.fpk` package was built, unpacked,
-and verified against all eleven source files. See [publishing validation](docs/PUBLISHING.md).
+Version 6 is deployed locally as a **TEST BUILD - NOT READY** release. Required
+metadata and the preview are present. The last verified native `.fpk` package is
+version 5; rebuild it before publishing version 6. See [publishing validation](docs/PUBLISHING.md).
 Use the Mod Editor's Paradox upload action while signed in to publish the deployed
 mod. Store acceptance and console functionality still require verification.
 
@@ -67,13 +67,15 @@ Enable the mod, restart the game after installing an update, then open
 This also works on PC with a connected controller, including a PS5 controller
 recognized by the game. This is the only settings entry; the general Mod Options
 list does not include this mod.
-The page uses the game's gold slider bars and supports controller navigation
+The page stays in the native left-side Options layout, retains the animated
+menu background, and shows **OPTIONS / CONTROLS / MOUSE CURSOR CONSOLES**.
+It uses the game's gold slider bars and supports controller navigation
 with mouse mode off. Opening it switches mouse mode off and releases held clicks;
 press your configured toggle again after closing settings to resume.
 
 The basic page has **Normal cursor speed**, **Fast cursor speed**, and **Cursor
-size %**, plus **Test cursor**, **Advanced settings**, **Reset to defaults**,
-**Apply and close**, and **Cancel**. D-pad Up/Down selects a row; Left/Right adjusts
+size %**, plus **Test cursor** and **Advanced settings**. The native bottom bar
+provides **Back**, **Default**, and **Apply**. D-pad Up/Down selects a row; Left/Right adjusts
 a slider or choice. Mouse dragging works on sliders too. Fast speed is an absolute
 speed and must be at least normal speed, not a fixed multiplier.
 
@@ -98,7 +100,10 @@ Select **Test cursor** to move an isolated preview with the left stick and your
 boost button. Circle/B or Escape returns to settings. Preview size/color changes
 appear immediately; changes affect the real cursor only after Apply. A connected
 controller is required for movement testing, but not for editing the sliders.
-Cancel discards the draft. Reset restores draft defaults; Apply saves them.
+Back from the basic page discards the draft and returns focus to Controls.
+Back from Advanced returns to basic settings. Default restores draft defaults;
+Apply saves them and returns to Controls. On a controller, use Circle/B for Back,
+Triangle/Y for Default, and Square/X for Apply.
 
 Preferences use the game's supported per-mod persistent storage and survive
 restarts. Cursor coordinates are transient and are never written into colony saves.
@@ -152,7 +157,7 @@ under `tests/` cover input, settings and the Controls entry in a disposable Wind
 [validation evidence and source references](docs/VALIDATION.md).
 
 Also verify controller navigation, slider dragging, preview movement/boost, Advanced
-scrolling, Reset, Cancel, conflicting bindings, and preference persistence after
+scrolling, Default, Back, conflicting bindings, and preference persistence after
 a full restart on each console. See [settings validation](docs/SETTINGS.md).
 
 Before promoting the test build to a stable release, perform these checks

@@ -1,42 +1,61 @@
--- A mod-owned modal, reached through Options > Controls.
--- Reuses the vanilla PropNumber slider; no shared classes are patched.
+-- A transparent child page in the existing Options shell.
+-- Reuses native title, action bar and sliders; no shared classes are patched.
 local M = MCC
 M.settings_entries = {}
 DefineClass.MCCSettingsDialog = {
     __parents = { "XDialog" },
     Id = "idMCCSettings", IdNode = true, IsModal = true,
-    ZOrder = 200000, Background = RGBA(5, 12, 20, 255),
+    Dock = "box", ZOrder = 2, Background = 0,
     draft = false, settings_host = false, advanced = false, testing = false,
     preview_motion = false, preview_controller = false,
+    hidden_controls = false, content_margins = false,
 }
 
 local function button(parent, text, action)
-    return MenuEntrySmall:new({ Text = Untranslated(text), TextStyle = "ListItem3R",
-        OnPress = action, MinHeight = 34 }, parent)
+    return MenuEntrySmall:new({ Text = Untranslated(text), TextStyle = "PropName",
+        Margins = box(18, 0, 0, 0), OnPress = action }, parent)
 end
 
 function MCCSettingsDialog:Init()
     self.draft = M.NewSettingsDraft()
     self.preview_motion = { x = 150000, y = 65000 }
-    local panel = XWindow:new({ Id = "idPanel", HAlign = "center", VAlign = "center",
-        MinWidth = 1000, MaxWidth = 1000, LayoutMethod = "VList", LayoutVSpacing = 8,
-        Padding = box(25, 15, 25, 15) }, self)
-    XText:new({ Translate = true, Id = "idHeading", TextStyle = "ListItem3R", Text = Untranslated("MOUSE CURSOR CONSOLES"),
-        HandleMouse = false }, panel)
-    XText:new({ Translate = true, Id = "idHelp", TextStyle = "ListItem4", HandleMouse = false,
-        Text = Untranslated("D-pad: choose and adjust. Apply saves; Cancel discards. Speeds are pixels/sec at 1080p.") }, panel)
+    local title = DialogTitleNew:new({ Margins = box(113, 0, 0, 0),
+        HAlign = "stretch", BigTitle = true }, self)
+    title:SetTitle(T(1131, "OPTIONS"))
+    title.idTexts:SetLayoutMethod("HList")
+    title.idSubtitle:SetVAlign("bottom")
+    title.idSubtitle:SetMargins(box(0, 0, 0, 3))
+    title.idFrame:SetMinWidth(510)
+    ActionBarNew:new({ Margins = box(109, 0, 0, 0) }, self)
+    XAction:new({ ActionId = "mccBack", ActionName = T(108518605856, "BACK"),
+        ActionToolbar = "ActionBar", ActionShortcut = "Escape", ActionGamepad = "ButtonB",
+        OnAction = function() self:GoBack() end }, self)
+    XAction:new({ ActionId = "mccDefaults", ActionName = T(849084517790, "DEFAULT"),
+        ActionToolbar = "ActionBar", ActionGamepad = "ButtonY",
+        OnAction = function() self:ResetDraft() end }, self)
+    XAction:new({ ActionId = "mccApply", ActionName = T(5447, "APPLY"),
+        ActionToolbar = "ActionBar", ActionGamepad = "ButtonX",
+        OnAction = function() self:ApplyDraft() end }, self)
+    local panel = XWindow:new({ Id = "idPanel", HAlign = "left", VAlign = "top",
+        Margins = self.content_margins, LayoutMethod = "VList", LayoutVSpacing = 13 }, self)
     local list_host = XWindow:new({ LayoutMethod = "HList" }, panel)
-    XList:new({ Id = "idList", MinWidth = 915, MaxWidth = 915, MaxHeight = 345,
-        BorderWidth = 0, Background = 0, FocusedBackground = 0, LayoutVSpacing = 5,
+    XList:new({ Id = "idList", MinWidth = 875, MaxWidth = 875, MaxHeight = 530,
+        BorderWidth = 0, Padding = box(0, 0, 0, 0),
+        Background = 0, FocusedBackground = 0, LayoutVSpacing = 13,
         VScroll = "idScroll", MouseScroll = true, ForceInitialSelection = true }, list_host)
     ScrollbarNew:new({ Id = "idScroll", Target = "idList" }, list_host)
+    XText:new({ Translate = true, Id = "idHelp", TextStyle = "ListItem4", HandleMouse = false,
+        Margins = box(18, 0, 0, 0), MaxWidth = 850,
+        Text = Untranslated("D-pad: choose and adjust. Apply saves changes. Speeds are pixels/sec at 1080p.") }, panel)
     local preview = XWindow:new({ Id = "idPreview", MinHeight = 135, MaxHeight = 135,
-        Background = RGBA(35, 52, 68, 255), Clip = "self", HandleMouse = false }, panel)
+        Margins = box(18, 0, 0, 0), Background = RGBA(35, 52, 68, 100),
+        Clip = "self", HandleMouse = false }, panel)
     XText:new({ Translate = true, TextStyle = "ListItem4", Text = Untranslated("TEST AREA  -  choose Test cursor to move here"),
         HandleMouse = false }, preview)
     XImage:new({ Id = "idPreviewCursor", HAlign = "left", VAlign = "top",
         HandleMouse = false, Image = const.DefaultMouseCursor }, preview)
     XText:new({ Translate = true, Id = "idStatus", TextStyle = "ListItem4", HandleMouse = false,
+        Margins = box(18, 0, 0, 0), MaxWidth = 850,
         Text = Untranslated("Changes are previewed here before you apply them.") }, panel)
     self:BuildRows()
 end
@@ -45,7 +64,10 @@ function MCCSettingsDialog:BuildRows()
     self.testing = false
     local list = self:ResolveId("idList")
     list:Clear()
-    self:ResolveId("idHeading"):SetText(Untranslated(self.advanced and "MOUSE CURSOR CONSOLES / ADVANCED" or "MOUSE CURSOR CONSOLES"))
+    local category = self.settings_host.mode_param
+    self:ResolveId("idTitle"):SetSubtitle(TLookupTag("<GameColorTagF>") .. Untranslated(" / ") ..
+        TLookupTag("<GameColorCloseTagF>") .. category.caps_name ..
+        Untranslated(self.advanced and " / MOUSE CURSOR CONSOLES / ADVANCED" or " / MOUSE CURSOR CONSOLES"))
     self:ResolveId("idPreview"):SetVisible(not self.advanced)
     self:ResolveId("idPreview"):SetFoldWhenHidden(true)
     local properties = self.draft:GetProperties()
@@ -54,7 +76,7 @@ function MCCSettingsDialog:BuildRows()
     for _, prop in ipairs(properties) do
         if wanted[prop.id] then
             if prop.editor == "number" then
-                PropNumber:new({ RolloverText = Untranslated(prop.help or ""),
+                PropNumber:new({ Margins = box(18, 0, 0, 0), RolloverText = Untranslated(prop.help or ""),
                     RolloverTitle = prop.name }, list, ModOptionEditorContext(self.draft, prop))
             else
                 local row
@@ -91,22 +113,29 @@ function MCCSettingsDialog:BuildRows()
         self.advanced = not self.advanced
         self:BuildRows()
     end)
-    button(list, "Reset to defaults", function()
-        for _, prop in ipairs(properties) do self.draft:SetProperty(prop.id, prop.default) end
-        self:BuildRows()
-        self:ResolveId("idStatus"):SetText(Untranslated("Defaults restored in preview. Choose Apply to save."))
-    end)
-    button(list, "Apply and close", function()
-        local ok, reason = M.SaveSettings(self.draft)
-        if ok then self:Close("apply")
-        else self:ResolveId("idStatus"):SetText(Untranslated(reason)) end
-    end)
-    button(list, "Cancel", function() self:Close("cancel") end)
     if self.window_state == "open" then
         for _, row in ipairs(list) do row:Open() end
         list:SetFocus()
         list:SetSelection(1)
     end
+end
+
+function MCCSettingsDialog:ResetDraft()
+    for _, prop in ipairs(self.draft:GetProperties()) do self.draft:SetProperty(prop.id, prop.default) end
+    self:BuildRows()
+    self:ResolveId("idStatus"):SetText(Untranslated("Defaults restored in preview. Choose Apply to save."))
+end
+
+function MCCSettingsDialog:ApplyDraft()
+    local ok, reason = M.SaveSettings(self.draft)
+    if ok then self:Close("apply")
+    else self:ResolveId("idStatus"):SetText(Untranslated(reason)) end
+end
+
+function MCCSettingsDialog:GoBack()
+    if self.testing then self:EndTest()
+    elseif self.advanced then self.advanced = false; self:BuildRows()
+    else self:Close("cancel") end
 end
 
 function MCCSettingsDialog:BeginTest()
@@ -125,14 +154,12 @@ function MCCSettingsDialog:EndTest()
     self.testing = false
     self:ResolveId("idList"):SetFocus()
     self:ResolveId("idList"):SetSelection(1)
-    self:ResolveId("idStatus"):SetText(Untranslated("Test ended. Apply saves your settings; Cancel discards changes."))
+    self:ResolveId("idStatus"):SetText(Untranslated("Test ended. Apply saves your settings; Back discards changes."))
 end
 
 function MCCSettingsDialog:OnShortcut(shortcut, source, ...)
     if shortcut == "Escape" or shortcut == "ButtonB" then
-        if self.testing then self:EndTest()
-        elseif self.advanced then self.advanced = false; self:BuildRows()
-        else self:Close("cancel") end
+        self:GoBack()
         return "break"
     end
     if self.testing then return "break" end
@@ -141,6 +168,8 @@ end
 
 function MCCSettingsDialog:Open(...)
     XDialog.Open(self, ...)
+    self:ResolveId("idList"):SetFocus()
+    self:ResolveId("idList"):SetSelection(1)
     self:CreateThread("MCCPreview", function()
         local last = RealTime()
         local last_size, last_color, last_x, last_y
@@ -174,20 +203,52 @@ function MCCSettingsDialog:Open(...)
             last = time
         end
     end)
-    M.Log("SettingsUI", "opened", {})
+    M.Log("SettingsUI", "opened", { layout = "options_child_page", background = "preserved" })
 end
 
 function MCCSettingsDialog:Done(result)
     if M.settings_dialog == self then M.settings_dialog = nil end
+    local host = self.settings_host
+    if host and host.window_state ~= "destroying" then
+        for control, state in pairs(self.hidden_controls or {}) do
+            if control.window_state ~= "destroying" then
+                control:SetFoldWhenHidden(state.fold)
+                control:SetVisible(state.visible)
+            end
+        end
+        local list = host:ResolveId("idList")
+        local entry = list and list:ResolveId("idMCCControlsEntry")
+        if entry and entry.window_state ~= "destroying" then entry:SetFocus() end
+        M.Log("SettingsUI", "controls_restored", { mode = host.Mode })
+    end
+    self.hidden_controls = false
     M.Log("SettingsUI", "closed", { result = result or "cleanup" })
 end
 
 function M.OpenSettings(host)
     if M.settings_dialog then return M.settings_dialog end
+    local list = host and host:ResolveId("idList")
+    local content = list and GetParentOfKind(list, "OptionsContentWindow")
+    local title = host and host:ResolveId("idTitle")
+    local actions = host and host:ResolveId("idActionBar")
+    if not content or not title or not actions or host.window_state ~= "open" or
+        host.Mode ~= "properties" or type(host.mode_param) ~= "table" or host.mode_param.id ~= "Controls" then
+        M.Log("SettingsUI", "open_rejected", { reason = "native_controls_shell_unavailable" })
+        return nil, "Native Controls page is unavailable."
+    end
     M.RestoreVanillaBehavior("settings_opened")
     M.held, M.swallowed = {}, {}
-    local dialog = MCCSettingsDialog:new({ settings_host = host }, terminal.desktop)
+    local hidden = {}
+    for _, control in ipairs({ content, title, actions }) do
+        hidden[control] = { visible = control:GetVisible(), fold = control:GetFoldWhenHidden() }
+    end
+    local dialog = MCCSettingsDialog:new({ settings_host = host, hidden_controls = hidden,
+        content_margins = content:GetMargins() }, content.parent)
     M.settings_dialog = dialog
+    for control in pairs(hidden) do
+        control:SetFoldWhenHidden(true)
+        control:SetVisible(false)
+    end
     dialog:Open()
     return dialog
 end
