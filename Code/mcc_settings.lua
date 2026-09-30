@@ -11,11 +11,11 @@ for _, key in ipairs(M.SettingKeys) do M.SettingDefaults[key] = M.Config[key] en
 
 -- Private Controls-page schema: no ModItemOption registrations in the general menu.
 M.SettingProperties = {
-    { id = "CURSOR_SPEED", name = Untranslated("Normal cursor speed"), editor = "number", default = M.SettingDefaults.CURSOR_SPEED, help = "Pixels per second at 1080p. Small stick movements travel more slowly.", min = 50, max = 4000, step = 50, slider = true, show_value_text = true, dpad_only = true },
-    { id = "CURSOR_FAST_SPEED", name = Untranslated("Fast cursor speed"), editor = "number", default = M.SettingDefaults.CURSOR_FAST_SPEED, help = "Absolute speed while holding the boost button. Must be at least normal speed.", min = 50, max = 8000, step = 50, slider = true, show_value_text = true, dpad_only = true },
+    { id = "CURSOR_SPEED", name = Untranslated("Normal cursor speed (px/s)"), editor = "number", default = M.SettingDefaults.CURSOR_SPEED, help = "Pixels per second at 1080p, scaled with screen height. Small stick movements travel more slowly.", min = 50, max = 4000, step = 50, slider = true, show_value_text = true, dpad_only = true },
+    { id = "CURSOR_FAST_SPEED", name = Untranslated("Fast cursor speed (px/s)"), editor = "number", default = M.SettingDefaults.CURSOR_FAST_SPEED, help = "Pixels per second at 1080p, scaled with screen height, while holding the boost button. Must be at least normal speed.", min = 50, max = 8000, step = 50, slider = true, show_value_text = true, dpad_only = true },
     { id = "CURSOR_SIZE", name = Untranslated("Cursor size %"), editor = "number", default = M.SettingDefaults.CURSOR_SIZE, help = "Scale the cursor image without changing its click position.", min = 50, max = 300, step = 10, slider = true, show_value_text = true, dpad_only = true },
     { id = "STICK_DEADZONE", name = Untranslated("Stick dead zone"), editor = "number", default = M.SettingDefaults.STICK_DEADZONE, help = "Radial threshold out of 32767. Increase to reduce drift; high values need more stick travel.", min = 0, max = 16000, step = 500, slider = true, show_value_text = true, dpad_only = true },
-    { id = "RESPONSE_CURVE", name = Untranslated("Stick response"), editor = "choice", default = M.SettingDefaults.RESPONSE_CURVE, help = "Gradual gives finer control near the center; full-stick speed is unchanged.", items = { { value = "Linear" }, { value = "Gradual" } } },
+    { id = "RESPONSE_CURVE", name = Untranslated("Stick response"), editor = "choice", default = M.SettingDefaults.RESPONSE_CURVE, help = "Linear: cursor speed follows stick tilt.\nGradual: finer control near the center.\nBoth reach the same speed at full tilt.", items = { { value = "Linear" }, { value = "Gradual" } } },
     { id = "SMOOTHING_MS", name = Untranslated("Smoothing (ms)"), editor = "number", default = M.SettingDefaults.SMOOTHING_MS, help = "Optional velocity smoothing. Zero disables it. Higher values add input delay; release stops immediately.", min = 0, max = 150, step = 10, slider = true, show_value_text = true, dpad_only = true },
     { id = "CURSOR_COLOR", name = Untranslated("Cursor color"), editor = "choice", default = M.SettingDefaults.CURSOR_COLOR, help = "Tint the cursor for visibility. Outline comes from the game cursor artwork.", items = { { value = "White" }, { value = "Yellow" }, { value = "Cyan" } } },
     { id = "REMEMBER_POSITION", name = Untranslated("Remember cursor position"), editor = "bool", default = M.SettingDefaults.REMEMBER_POSITION, help = "Resume at the previous position when toggling on in this session. Settings persist; cursor coordinates do not enter saves." },
@@ -37,7 +37,7 @@ function M.NewSettingsDraft()
 end
 
 M.ButtonLabels = {
-    RightThumbClick = "R3 / Right-stick click", LeftThumbClick = "L3 / Left-stick click",
+    RightThumbClick = "R3 / Right-stick click", LeftThumbClick = "L3 / LS click",
     ButtonA = "Cross / A", ButtonB = "Circle / B", ButtonX = "Square / X",
     ButtonY = "Triangle / Y", LeftShoulder = "L1 / LB", RightShoulder = "R1 / RB",
     LeftTrigger = "L2 / LT", RightTrigger = "R2 / RT", Start = "Options / Menu",
@@ -93,20 +93,32 @@ function M.ApplySettings(options)
     for _, key in ipairs(M.SettingKeys) do M.Config[key] = values[key] end
     if not M.Config.REMEMBER_POSITION then M.remembered_position = nil end
     M.Log("Settings", "preferences_applied", { normal = values.CURSOR_SPEED, fast = values.CURSOR_FAST_SPEED,
-        size = values.CURSOR_SIZE, deadzone = values.STICK_DEADZONE, curve = values.RESPONSE_CURVE, smoothing_ms = values.SMOOTHING_MS })
+        size = values.CURSOR_SIZE, deadzone = values.STICK_DEADZONE, curve = values.RESPONSE_CURVE,
+        smoothing_ms = values.SMOOTHING_MS, boost_button = values.SPEED_BOOST_BUTTON })
     return true
 end
 
 function M.LoadSettings()
     local saved = CurrentModStorageTable and CurrentModStorageTable.settings
     if saved ~= nil then
-        if type(saved) ~= "table" or saved.schema ~= 1 or type(saved.values) ~= "table" then
+        if type(saved) ~= "table" or (saved.schema ~= 1 and saved.schema ~= 2) or type(saved.values) ~= "table" then
             M.Log("Settings", "storage_rejected", { reason = "unsupported_schema" })
             return false, "Unsupported saved cursor settings."
         end
         local ok, reason = M.ValidateSettings(saved.values)
         if not ok then M.Log("Settings", "storage_rejected", { reason = reason }); return false, reason end
         for _, key in ipairs(M.SettingKeys) do CurrentModOptions:SetProperty(key, saved.values[key]) end
+        -- Schema 1 used L2/LT by default. Move that default to the stick click
+        -- only if it is free; never displace another action or a custom boost.
+        -- Apply writes schema 2 so an explicit future L2 choice is preserved.
+        if saved.schema == 1 and saved.values.SPEED_BOOST_BUTTON == "LeftTrigger" then
+            local conflict
+            for _, key in ipairs(M.SettingKeys) do
+                if key:sub(-7) == "_BUTTON" and saved.values[key] == "LeftThumbClick" then conflict = key end
+            end
+            if not conflict then CurrentModOptions:SetProperty("SPEED_BOOST_BUTTON", "LeftThumbClick") end
+            M.Log("Settings", "boost_default_migration", { applied = not conflict, conflict = conflict or "none" })
+        end
     end
     return M.ApplySettings(CurrentModOptions)
 end
@@ -120,7 +132,7 @@ function M.SaveSettings(draft)
         return false, "Mod preference storage is not available. Settings were not saved."
     end
     local previous = CurrentModStorageTable.settings
-    CurrentModStorageTable.settings = { schema = 1, values = values }
+    CurrentModStorageTable.settings = { schema = 2, values = values }
     local err = WriteModPersistentStorageTable()
     if err then
         CurrentModStorageTable.settings = previous

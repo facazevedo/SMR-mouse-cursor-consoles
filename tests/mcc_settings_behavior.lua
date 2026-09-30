@@ -20,6 +20,7 @@ for _, key in ipairs(M.SettingKeys) do
     check(definitions[key] and definitions[key].default == defaults[key], "Controls/config default mismatch: " .. key)
 end
 check(M.ValidateSettings(defaults), "Defaults must be valid")
+check(defaults.SPEED_BOOST_BUTTON == "LeftThumbClick", "Both controller families default to holding the left-stick click")
 local cfg = copy(defaults)
 cfg.CURSOR_FAST_SPEED = 800
 check(not M.ValidateSettings(cfg), "Fast speed below normal rejected")
@@ -67,6 +68,7 @@ WriteModPersistentStorageTable = function() save_count = save_count + 1 end
 cfg = copy(defaults); cfg.CURSOR_SIZE = 170; cfg.CURSOR_SPEED = 500
 check(M.SaveSettings(options(cfg)), "Valid preferences save")
 check(save_count == 1 and current.CURSOR_SIZE == 170 and M.Config.CURSOR_SPEED == 500, "Apply updates runtime and saved options")
+check(CurrentModStorageTable.settings.schema == 2, "New saves use schema 2")
 check(CurrentModStorageTable.unrelated.keep, "Unrelated storage preserved")
 local stored = CurrentModStorageTable.settings.values
 check(M.ReadSettings(options(stored)).CURSOR_SIZE == 170, "Preferences reload from account storage")
@@ -78,5 +80,17 @@ check(not M.SaveSettings(options(cfg)) and CurrentModStorageTable.settings.value
     and M.Config.CURSOR_SIZE == 170, "Write failure preserves current settings and reports failure")
 current.CURSOR_SIZE = 100
 check(M.LoadSettings() and current.CURSOR_SIZE == 170, "Saved schema reloads into native options")
+cfg = copy(defaults); cfg.SPEED_BOOST_BUTTON = "LeftTrigger"
+CurrentModStorageTable.settings = { schema = 1, values = cfg }
+check(M.LoadSettings() and M.Config.SPEED_BOOST_BUTTON == "LeftThumbClick", "Old L2/LT default migrates to L3/LS")
+check(cfg.SPEED_BOOST_BUTTON == "LeftTrigger", "Loading migration does not silently write storage")
+cfg.TOGGLE_BUTTON = "LeftThumbClick"
+check(M.LoadSettings() and M.Config.SPEED_BOOST_BUTTON == "LeftTrigger" and M.Config.TOGGLE_BUTTON == "LeftThumbClick", "Migration preserves a conflicting custom stick-click binding")
+cfg.TOGGLE_BUTTON = "RightThumbClick"; cfg.SPEED_BOOST_BUTTON = "RightTrigger"
+check(M.LoadSettings() and M.Config.SPEED_BOOST_BUTTON == "RightTrigger", "Migration preserves custom boost bindings")
+cfg.SPEED_BOOST_BUTTON = "LeftTrigger"; CurrentModStorageTable.settings.schema = 2
+check(M.LoadSettings() and M.Config.SPEED_BOOST_BUTTON == "LeftTrigger", "Explicit L2/LT binding in schema 2 remains unchanged")
+CurrentModStorageTable.settings.schema = 99
+check(not M.LoadSettings(), "Unknown saved schema rejected")
 check(M.ApplySettings(options(defaults)), "Defaults can be restored")
 print("PASS: " .. checks .. " settings and motion checks (host)")

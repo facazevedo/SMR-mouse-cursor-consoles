@@ -72,7 +72,7 @@ function GetInGameInterface() return nil end -- first main menu, no colony loade
 UIL = { GetScreenSizeXY = function() return 1920, 1080 end }
 XInput = {
     CurrentState = { [0] = { LeftThumb = point(0, 0), RightThumb = point(32767, 0) } },
-    Buttons = { "RightThumbClick", "ButtonA", "ButtonB", "ButtonX", "LeftShoulder", "RightShoulder", "Start" },
+    Buttons = { "LeftThumbClick", "RightThumbClick", "ButtonA", "ButtonB", "ButtonX", "LeftShoulder", "RightShoulder", "Start" },
     AnalogsAsButtons = { "LeftTrigger", "RightTrigger" },
     IsControllerConnected = function() return connected end,
     IsCtrlButtonPressed = function(_, button)
@@ -142,24 +142,24 @@ local function step()
     assert(ok, err)
 end
 XInput.CurrentState[0].LeftThumb = point(32767, 0)
-physical.LeftTrigger = 63
+physical.LeftTrigger = 255
 local before = M.x
 step()
-check(not M.boost_active and M.x - before == 18000, "Below trigger threshold must keep normal speed")
-physical.LeftTrigger = 64
+check(not M.boost_active and M.x - before == 18000, "L2/LT must keep normal speed with the default stick-click binding")
+physical.LeftThumbClick = true
 before = M.x
 step()
-check(M.boost_active and M.x - before == 45000, "Held L2/LT must move exactly 2.5x faster")
+check(M.boost_active and M.x - before == 45000, "Held L3 / Xbox LS click must move exactly 2.5x faster")
 local boost_events = #events
-event("OnXButtonDown", "LeftTrigger"); event("OnXButtonRepeat", "LeftTrigger")
-check(#events == boost_events, "Boost trigger must not emit clicks or wheel events")
-physical.LeftTrigger = 0 -- deliberately omit button-up delivery until after polling
+event("OnXButtonDown", "LeftThumbClick"); event("OnXButtonRepeat", "LeftThumbClick")
+check(#events == boost_events, "Boost stick click must not emit clicks or wheel events")
+physical.LeftThumbClick = false -- deliberately omit button-up delivery until after polling
 before = M.x
 step()
 check(not M.boost_active and M.x - before == 18000, "Physical release must restore speed even without button-up")
-event("OnXButtonUp", "LeftTrigger")
+event("OnXButtonUp", "LeftThumbClick")
 M.Config.ENABLE_SPEED_BOOST = false
-physical.LeftTrigger = 255
+physical.LeftThumbClick = true
 before = M.x
 step()
 check(not M.boost_active and M.x - before == 18000, "Disabled boost flag must prevent acceleration")
@@ -168,7 +168,7 @@ XInput.CurrentState[0].LeftThumb = point(0, 0)
 before = M.x
 step()
 check(M.boost_active and M.x == before, "Held boost alone must not move cursor")
-physical.LeftTrigger = 0
+physical.LeftThumbClick = false
 step()
 event("OnXButtonDown", "ButtonA")
 check(events[#events].event == "OnMouseButtonDown" and events[#events].button == "L", "Cross/A must press left mouse")
@@ -194,10 +194,10 @@ check(events[#events].event == "Escape", "Menu must dispatch PC Escape")
 count = #events
 event("OnXButtonDown", "ButtonA", 1); event("OnXButtonDown", "RightThumbClick", 1)
 check(M.active and #events == count, "Other controller cannot click or toggle owner session")
-physical.LeftTrigger = 255; M.UpdateSpeedBoost()
+physical.LeftThumbClick = true; M.UpdateSpeedBoost()
 event("OnXButtonDown", "ButtonB"); toggle()
-check(not M.boost_active, "Toggle off must clear boost even if trigger remains held")
-physical.LeftTrigger = 0
+check(not M.boost_active, "Toggle off must clear boost even if stick click remains held")
+physical.LeftThumbClick = false
 check(not M.active and not M.cursor and style == "gamepad", "Same toggle must restore gamepad")
 check(events[#events].event == "OnMouseButtonUp" and events[#events].button == "R", "Exit must release held right click")
 check(hr.XBoxLeftThumbLocked == 2 and hr.XBoxRightThumbLocked == 3, "Exit must preserve existing camera locks")
@@ -232,9 +232,9 @@ for _, hook in ipairs({ "NewGame", "ChangeMap", "LoadGame", "DoneGame" }) do
     check(#events == event_count, hook .. " must cancel held wheel repeats")
     event("OnXButtonUp", "ButtonA"); event("OnXButtonUp", "LeftShoulder")
 end
-physical.LeftTrigger = 255; M.UpdateSpeedBoost(); msg("SystemInactivate")
+physical.LeftThumbClick = true; M.UpdateSpeedBoost(); msg("SystemInactivate")
 check(not M.active and not M.boost_active and style == "gamepad", "Focus loss must restore controls and boost")
-physical.LeftTrigger = 0
+physical.LeftThumbClick = false
 toggle(); ChangeGamepadUIStyle({ [1] = "gamepad" })
 check(not M.active and hr.XBoxLeftThumbLocked == 2, "External control-style change must release ownership")
 M.Config.ENABLE_MOUSE_MODE = false
@@ -250,7 +250,7 @@ M.Config.SPEED_BOOST_BUTTON = "ButtonA"
 check(not M.Validate(), "Boost binding must not collide with left click")
 M.Config.SPEED_BOOST_BUTTON = "RightTrigger"
 check(M.Validate(), "Right trigger is a supported configurable boost binding")
-M.Config.SPEED_BOOST_BUTTON = "LeftTrigger"
+M.Config.SPEED_BOOST_BUTTON = "LeftThumbClick"
 for _, invalid in ipairs({ 49, 8001, 150.5, "2250" }) do
     M.Config.CURSOR_FAST_SPEED = invalid
     check(not M.Validate(), "Invalid fast speed must be rejected: " .. tostring(invalid))

@@ -13,7 +13,7 @@ rawset(_G, "MCC", {
         WHEEL_UP_BUTTON = "LeftShoulder",
         WHEEL_DOWN_BUTTON = "RightShoulder",
         MENU_BUTTON = "Start",
-        SPEED_BOOST_BUTTON = "LeftTrigger", -- hold L2 / LT
+        SPEED_BOOST_BUTTON = "LeftThumbClick", -- hold L3 / Xbox left-stick click
         CURSOR_SPEED = 900, -- pixels/second at 1080p; scales with screen height
         CURSOR_FAST_SPEED = 2250, -- independent pixels/second at 1080p
         CURSOR_SIZE = 100, -- percent

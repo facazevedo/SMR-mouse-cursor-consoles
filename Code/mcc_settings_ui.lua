@@ -50,13 +50,13 @@ function MCCSettingsDialog:Init()
         OnAction = function() self:ApplyDraft() end }, self)
     local panel = XWindow:new({ Id = "idPanel", Dock = "box",
         Margins = box(113, self.content_margins:miny(), 79, self.content_margins:maxy()) }, self)
-    -- Native control size, with compact spacing to fit all fifteen rows.
+    -- Match the native Controls list's size, row height and vertical spacing.
     local column = XWindow:new({ Id = "idSettingsColumn", Dock = "left",
         MinWidth = 875, MaxWidth = 875, LayoutMethod = "VList", LayoutVSpacing = 16 }, panel)
     XList:new({ Id = "idList", MinWidth = 875, MaxWidth = 875,
         LeftThumbScroll = false,
         BorderWidth = 0, Padding = box(0, 0, 0, 0),
-        Background = 0, FocusedBackground = 0, LayoutVSpacing = 6,
+        Background = 0, FocusedBackground = 0, LayoutVSpacing = 13, UniformRowHeight = true,
         MouseScroll = false, ForceInitialSelection = true }, column)
     -- Keep validation/save errors available without permanent instruction text.
     XText:new({ Translate = true, Id = "idStatus", TextStyle = "ListItem4", HandleMouse = false,
@@ -64,8 +64,13 @@ function MCCSettingsDialog:Init()
     local preview = XAspectWindow:new({ Id = "idPreview", Dock = "ignore",
         Aspect = point(1, 1), Fit = "smallest", HAlign = "center", VAlign = "center",
         Background = RGBA(35, 52, 68, 100), Clip = "self", HandleMouse = false }, self)
+    XText:new({ Id = "idPreviewLabel", Translate = true, Text = Untranslated("Test area"),
+        TextStyle = "PropName", HAlign = "left", VAlign = "top", HandleMouse = false,
+        Margins = box(12, 8, 0, 0), Padding = box(0, 0, 0, 0) }, preview)
     XImage:new({ Id = "idPreviewCursor", HAlign = "left", VAlign = "top",
-        HandleMouse = false, Image = const.DefaultMouseCursor }, preview)
+        -- The game's 40x40 default arrow has visible pixels in this 24x26 rect.
+        -- Exclude transparent right/bottom padding from preview travel bounds.
+        HandleMouse = false, Image = const.DefaultMouseCursor, ImageRect = box(0, 0, 24, 26) }, preview)
     self:BuildRows()
 end
 
@@ -99,8 +104,13 @@ function MCCSettingsDialog:BuildRows()
     local properties = self.draft:GetProperties()
     for _, prop in ipairs(properties) do
         if prop.editor == "number" then
-            PropNumber:new({ Margins = box(0, 0, 0, 0), RolloverText = Untranslated(prop.help or ""),
+            local row = PropNumber:new({ Margins = box(0, 0, 0, 0), RolloverText = Untranslated(prop.help or ""),
                 RolloverTitle = prop.name }, list, ModOptionEditorContext(self.draft, prop))
+            -- Native Controls hides values. Our visible value text must use
+            -- the name's padding/height so it cannot increase the row height.
+            row.idValueText:SetPadding(box(0, 0, 0, 0))
+            row.idValueText:SetMaxHeight(row.idName.MaxHeight)
+            row.idValueText:SetTextVAlign("center")
         else
             local row
             local function label()
@@ -120,7 +130,15 @@ function MCCSettingsDialog:BuildRows()
                 self.draft:SetProperty(prop.id, value)
                 row:SetText(Untranslated(label()))
             end
-            row = button(list, label(), function() cycle(1) end, { Margins = box(0, 0, 0, 0) })
+            local row_properties = { Margins = box(0, 0, 0, 0) }
+            if prop.id == "RESPONSE_CURVE" then
+                row_properties.RolloverTemplate = "MarsRollover"
+                row_properties.RolloverAnchor = "right"
+                row_properties.RolloverOnFocus = true
+                row_properties.RolloverText = Untranslated(prop.help)
+                row_properties.RolloverTitle = prop.name
+            end
+            row = button(list, label(), function() cycle(1) end, row_properties)
             row.OnShortcut = function(control, shortcut, source, ...)
                 if shortcut == "DPadLeft" then cycle(-1); return "break" end
                 if shortcut == "DPadRight" then cycle(1); return "break" end
@@ -128,7 +146,8 @@ function MCCSettingsDialog:BuildRows()
             end
         end
     end
-    M.Log("SettingsUI", "rows_built", { count = #list, scrolling = false, preview_left_stick = true })
+    M.Log("SettingsUI", "rows_built", { count = #list, scrolling = false, preview_left_stick = true,
+        spacing = list.LayoutVSpacing, uniform_height = list.UniformRowHeight })
     if self.window_state == "open" then
         for _, row in ipairs(list) do row:Open() end
         list:SetFocus()
@@ -179,6 +198,7 @@ function MCCSettingsDialog:Open(...)
             local area, image = self:ResolveId("idPreview"), self:ResolveId("idPreviewCursor")
             if cfg.CURSOR_SIZE ~= last_size or cfg.CURSOR_COLOR ~= last_color then
                 M.StyleCursor(image, cfg)
+                image:InvalidateMeasure()
                 last_size, last_color = cfg.CURSOR_SIZE, cfg.CURSOR_COLOR
             end
             -- measure_width/height include the moving margins. The rendered

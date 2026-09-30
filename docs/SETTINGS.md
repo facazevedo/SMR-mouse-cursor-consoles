@@ -1,4 +1,4 @@
-# Version 11: cursor settings
+# Version 12: cursor settings
 
 Entry point: **Options > Controls > Mouse Cursor Consoles**, while the mod is
 enabled. Continuous values use the game's `PropNumber` control, including the
@@ -9,15 +9,59 @@ absolute fast speed, cursor size, dead zone, response curve, smoothing, color,
 remembered position and seven distinct button bindings. Back, Default and Apply
 remain in the native bottom action bar. The large square test area is centered
 in the right half of the screen and responds to the left stick immediately.
-Permanent instructions and preview-status text are removed; save/validation
-errors appear only when needed. Toggle
+The corner is labeled **Test area**. Speed labels include **(px/s)** and Stick response
+uses the same right-side `MarsRollover` tooltip as Smoothing. Other permanent
+instructions and preview-status text remain removed; save/validation errors appear
+only when needed. Toggle
 choices are L3/R3 to keep ordinary menu navigation available. Analog triggers are
 available for the polled boost modifier only. The README documents ranges/defaults.
+
+## Version 12 validation (2026-09-29)
+
+- Matched native Controls' uniform 35-unit rows and 13-unit gap. Visible slider
+  values now use the name's zero padding and height limit, preventing taller rows.
+- Preview-only `XImage.ImageRect` excludes transparent padding: read-only
+  `D:/PROJS/SMR/fpks/Packs/UI/Cursors/cursor.tga` is 40x40, with an alpha bounding
+  box of `(0, 0, 24, 26)`. The visible arrow reaches every edge without changing
+  the original asset or gameplay cursor. Size changes invalidate measurement.
+- Default boost is hold **L3 / Xbox LS click**; release restores normal speed.
+  Schema-1 L2/LT defaults migrate on load if LS is free. Other bindings and LS
+  conflicts are preserved. Apply saves schema 2, retaining future explicit L2/LT
+  choices. Loading alone does not write preferences.
+- `DEBUG_LOGS == true` gates row-layout and migration diagnostics, including
+  conflict reasons and the applied boost button. Existing `DEBUG_INPUT == true`
+  controls boost-transition logging together with `DEBUG_LOGS`.
+- Host: **81 behavior + 56 settings/motion checks passed**, including LS hold,
+  release without a button-up event, L2 no longer boosting by default, and migration.
+- Actual Windows engine: **41 settings + 25 Controls-entry checks passed** with
+  simulated controller input. Verified matching spacing/font/slider size, all 15
+  rows without scrolling, square geometry, corner label, visible-image bounds,
+  four cursor corners, held LS speed and release, Apply/Back/Default, preferences,
+  entry alignment and restoration. Final screenshot reviewed at 3840x2043 shows
+  speed units, the native right-side Stick response tooltip, and the arrow at
+  the square's bottom-right edge. Reports/screenshots stay ignored in `tests/results`.
+- `luac -p` passed for every payload Lua file and all changed test Lua files.
+  Runtime load order is unchanged. Deployment copied/hash-verified all 11 payload
+  files to `%APPDATA%/Surviving Mars Relaunched/Mods/MouseCursorConsoles`.
+- Read-only references: `Lua/XDef/PropNumber.generated.lua`, native Options list
+  layout, `CommonLua/X/XImage.lua`, `XWindow.lua`, `XRollover.lua`, and mod storage
+  implementation. No game, third-party, generated, asset, or harness source changed.
+- Logs read: `MarsDebug.exe-20260929-21.57.40-6aad2de6.log`,
+  `MarsDebug.exe-20260929-22.07.51-6aad2de6.log`, retail startup log
+  `Mars.exe-20260929-21.54.17-6aad2d75.log`, and matching debug harness logs.
+  An earlier debug session hit native account-save sharing violations and modal
+  interference; it was not counted as passing. Fresh debug-session final suites
+  passed. Final session logs had no Lua-error/assertion/sharing-violation matches.
+  Logs were retained; the user's retail game was not stopped.
+- Physical PS5/Xbox hardware, console rendering and save/reload gameplay remain
+  untested. Restart the game, check both speed labels and the response tooltip,
+  hold/release LS in the preview, then move to all four edges. Confirm custom
+  bindings survive and the Controls screen restores on Back.
 
 ## Ownership and behavior
 
 - `mcc_settings.lua` owns preference validation, read/apply/save, button labels and
-  cursor styling. Preferences use `CurrentModStorageTable.settings`, schema 1,
+  cursor styling. Preferences use `CurrentModStorageTable.settings`, schema 2 (schema 1 remains readable),
   written with the supported `WriteModPersistentStorageTable` API. No direct
   account-storage access is attempted by the deployed mod.
 - `mcc_settings_ui.lua` owns a transparent child page and draft inside the
@@ -421,7 +465,7 @@ preference persistence on console, colony interactions and actual save/reload
 gameplay remain unverified. No store upload was performed.
 
 On each console: enable the mod, open its settings without mouse mode, adjust each
-slider, preview normal/boosted movement, scroll Advanced and change a binding.
+slider, preview normal/boosted movement, and change a binding in the single left column.
 Check invalid bindings are rejected, Cancel preserves old values, Reset requires
 Apply, and settings survive quitting/relaunching the game. Then repeat the
 README's gameplay/restoration checks and report whether the jumping changes.

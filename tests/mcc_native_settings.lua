@@ -21,7 +21,7 @@ CreateRealTimeThread(function()
         fake.IsControllerConnected = function(id) return id == 0 end
         fake.IsCtrlButtonPressed = function(id, key)
             local value = fake.CurrentState[id] and fake.CurrentState[id][key]
-            return type(value) == "number" and value >= XInput.GetButtonTreshold(key)
+            return value == true or type(value) == "number" and value >= XInput.GetButtonTreshold(key)
         end
         rawset(env, "XInput", fake)
         rawset(env, "ActiveController", 0)
@@ -40,6 +40,8 @@ CreateRealTimeThread(function()
         end
         local native_scale = native_number.idName.scale
         local native_slider_width = native_number.idSlider.box:sizex()
+        local native_list = host:ResolveId("idList")
+        local native_row_step = native_list[3].box:miny() - native_list[2].box:miny()
         local dlg = m.OpenSettings(host)
         Sleep(150)
         check(dlg.window_state == "open" and not m.active, "settings open without mouse mode")
@@ -52,8 +54,19 @@ CreateRealTimeThread(function()
         check(list[1].idName.scale == native_scale and list[5].idText.scale == native_scale
             and list[1].idSlider.box:sizex() == native_slider_width,
             "option text and sliders use the same size as native Controls")
-        check(#preview == 1 and not dlg:ResolveId("idStatus"):GetVisible(),
-            "preview contains only the cursor and no permanent status text")
+        local same_spacing = true
+        for i = 2, #list do
+            local difference = list[i].box:miny() - list[i - 1].box:miny() - native_row_step
+            if difference < -1 or difference > 1 then same_spacing = false end
+        end
+        check(same_spacing, "all rows match the vertical spacing of native Controls")
+        local label = dlg:ResolveId("idPreviewLabel")
+        check(#preview == 2 and _InternalTranslate(label.Text) == "Test area"
+            and label.box:minx() >= preview.box:minx() and label.box:miny() >= preview.box:miny()
+            and label.box:maxx() < preview.box:minx() + preview.box:sizex() / 2
+            and label.box:maxy() < preview.box:miny() + preview.box:sizey() / 2
+            and not dlg:ResolveId("idStatus"):GetVisible(),
+            "Test area appears inside the upper-left corner without permanent status text")
         check(preview.box:minx() > list.box:maxx() and preview.box:sizex() == preview.box:sizey()
             and preview.box:sizey() > panel.box:sizey() / 2,
             "right preview is a large square with equal width and height")
@@ -61,6 +74,12 @@ CreateRealTimeThread(function()
         check(preview.box:minx() + preview.box:maxx() == 2 * MulDivRound(screen_width, 3, 4)
             and preview.box:miny() + preview.box:maxy() == 2 * MulDivRound(screen_height, 1, 2),
             "square is centered in the right half of the screen")
+        check(list[5].RolloverTemplate == list[6].RolloverTemplate
+            and list[5].RolloverAnchor == "right" and list[5].RolloverOnFocus
+            and _InternalTranslate(list[5].RolloverText):find("Gradual: finer control", 1, true),
+            "stick response uses the same right-side explanation tooltip as Smoothing")
+        check(dlg:ResolveId("idPreviewCursor").ImageRect == box(0, 0, 24, 26),
+            "cursor travel bounds exclude verified transparent padding in the default arrow")
         local first_y = list[1].box:miny()
         for i = 1, 14 do list:OnShortcut("DPadDown", "gamepad") end
         check(list:GetFocusedItem() == 15 and list[1].box:miny() == first_y,
@@ -84,6 +103,25 @@ CreateRealTimeThread(function()
         fake.CurrentState[0].LeftThumb = point(32767,0)
         Sleep(80)
         check(dlg.preview_motion.x > start, "left stick moves preview immediately while all settings are visible")
+        local saved_boost = dlg.draft:GetProperty("SPEED_BOOST_BUTTON")
+        local saved_filter = dlg.draft:GetProperty("SMOOTHING_MS")
+        dlg.draft:SetProperty("SPEED_BOOST_BUTTON", "LeftThumbClick")
+        dlg.draft:SetProperty("SMOOTHING_MS", 0)
+        fake.CurrentState[0].LeftThumbClick = true
+        Sleep(60)
+        check(dlg.preview_motion.vx == MulDivRound(dlg.draft:GetProperty("CURSOR_FAST_SPEED"), screen_height, 1080) * 1000,
+            "holding L3 / Xbox LS click activates configured fast preview speed")
+        fake.CurrentState[0].LeftThumbClick = false
+        Sleep(60)
+        check(dlg.preview_motion.vx == MulDivRound(dlg.draft:GetProperty("CURSOR_SPEED"), screen_height, 1080) * 1000,
+            "releasing the stick click restores normal preview speed")
+        fake.CurrentState[0].LeftTrigger = 255
+        Sleep(60)
+        check(dlg.preview_motion.vx == MulDivRound(dlg.draft:GetProperty("CURSOR_SPEED"), screen_height, 1080) * 1000,
+            "L2 / LT does not boost the preview with the stick-click binding")
+        fake.CurrentState[0].LeftTrigger = 0
+        dlg.draft:SetProperty("SPEED_BOOST_BUTTON", saved_boost)
+        dlg.draft:SetProperty("SMOOTHING_MS", saved_filter)
         fake.CurrentState[0].LeftThumb = point(0,0)
         local saved_speed, saved_smoothing = dlg.draft:GetProperty("CURSOR_SPEED"), dlg.draft:GetProperty("SMOOTHING_MS")
         dlg.draft:SetProperty("CURSOR_SPEED", 4000)

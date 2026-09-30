@@ -1,13 +1,13 @@
 # Mouse Cursor Consoles
 
 A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor and
-temporarily uses the PC interface. Current release: metadata version **11**.
+temporarily uses the PC interface. Current release: metadata version **12**.
 
 | Action | PS5 | Xbox Series X/S |
 | --- | --- | --- |
 | Mouse mode on / off | R3 | Right-stick click |
 | Move cursor | Left stick | Left stick |
-| Hold for 2.5x cursor speed | L2 | LT |
+| Hold for 2.5x cursor speed | Hold L3 | Hold left-stick click (LS) |
 | Left click / hold to drag | Cross | A |
 | Right click | Circle | B |
 | Wheel up | L1 | LB |
@@ -23,10 +23,13 @@ sticks are locked while mouse mode is active; move to the screen edge for the
 game's PC camera behavior. Other controller actions are suppressed in mouse mode
 to avoid triggering both a mouse action and its original controller action.
 
-By default, hold L2 / LT while moving the left stick to move 2.5 times faster. Release it
+By default, press and hold L3 / Xbox left-stick click while moving the left stick to move 2.5 times faster. Release it
 to return to normal speed (optional smoothing makes the transition gradual). This is a hold modifier, not a
 toggle; it does not change click or wheel behavior. It has no effect outside
-mouse mode. Holding it before entering mouse mode also enables the boost.
+mouse mode or the settings preview. Holding it before entering mouse mode also enables the boost.
+Existing L2/LT-default preferences migrate to left-stick click unless that button is
+already assigned. Custom bindings remain available; an explicit L2/LT choice saved
+in version 12 is retained.
 
 **R3 normally pauses the game in a colony.** This mod reserves it for the toggle on all screens,
 including while mouse mode is off. Use the HUD's pause control, or configure a
@@ -54,9 +57,9 @@ publication was performed. Paradox advertises cross-platform mod support on the
 [official game page](https://www.paradoxinteractive.com/games/surviving-mars-relaunched/about),
 but that does not certify this particular code mod on either console.
 
-Version 11 is deployed locally as a **TEST BUILD - NOT READY** release. Required
+Version 12 is deployed locally as a **TEST BUILD - NOT READY** release. Required
 metadata and the preview are present. The last verified native `.fpk` package is
-version 5; rebuild it before publishing version 11. See [publishing validation](docs/PUBLISHING.md).
+version 5; rebuild it before publishing version 12. See [publishing validation](docs/PUBLISHING.md).
 Use the Mod Editor's Paradox upload action while signed in to publish the deployed
 mod. Store acceptance and console functionality still require verification.
 
@@ -171,7 +174,7 @@ separately on PS5 and Xbox Series X/S:
    and confirm the cursor works there and in setup screens. Start a colony and
    verify mouse mode stays on. Move left stick in all directions; verify dead
    zone, screen edges and speed. Right stick must not move the cursor or camera.
-   Hold L2 / LT and confirm faster travel; release it and confirm normal
+   Press and hold L3 / Xbox left-stick click and confirm faster travel; release it and confirm normal
    speed immediately resumes. Test toggle-off and disconnect while holding it,
    and verify `ENABLE_SPEED_BOOST=false` prevents acceleration.
 2. Select a building, open tooltips and menus, double click, drag a slider and
