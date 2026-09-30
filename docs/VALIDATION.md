@@ -1,5 +1,13 @@
 # Validation record
 
+## Version 11: native size and full square travel
+
+Restored standard option sizes, removed permanent preview text, centered the
+square in the right half and fixed position margins reducing cursor travel.
+Passed 35 native settings and 25 entry checks, including all four corners,
+native-size comparison, square centering and 15 visible rows. Syntax and 129
+host checks passed. See [settings validation](SETTINGS.md) for evidence and limits.
+
 ## Version 10: all settings beside a square preview
 
 All 15 settings fit in the left column without scrolling or an Advanced page.

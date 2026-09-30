@@ -1,7 +1,7 @@
 # Mouse Cursor Consoles
 
 A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor and
-temporarily uses the PC interface. Current release: metadata version **10**.
+temporarily uses the PC interface. Current release: metadata version **11**.
 
 | Action | PS5 | Xbox Series X/S |
 | --- | --- | --- |
@@ -54,9 +54,9 @@ publication was performed. Paradox advertises cross-platform mod support on the
 [official game page](https://www.paradoxinteractive.com/games/surviving-mars-relaunched/about),
 but that does not certify this particular code mod on either console.
 
-Version 10 is deployed locally as a **TEST BUILD - NOT READY** release. Required
+Version 11 is deployed locally as a **TEST BUILD - NOT READY** release. Required
 metadata and the preview are present. The last verified native `.fpk` package is
-version 5; rebuild it before publishing version 10. See [publishing validation](docs/PUBLISHING.md).
+version 5; rebuild it before publishing version 11. See [publishing validation](docs/PUBLISHING.md).
 Use the Mod Editor's Paradox upload action while signed in to publish the deployed
 mod. Store acceptance and console functionality still require verification.
 
@@ -70,8 +70,9 @@ recognized by the game. This is the only settings entry; the general Mod Options
 list does not include this mod.
 The page uses the native Options shell, retains the animated
 menu background, and shows **OPTIONS / CONTROLS / MOUSE CURSOR CONSOLES**.
-All 15 settings fit in a compact left column without scrolling. A large square
-test area sits on the right, with space around it.
+All 15 settings use standard Controls text and slider sizes in the left column
+without scrolling. A large square test area is centered in the right half of
+the screen. The cursor can reach every edge; permanent instructional text is removed.
 It uses the game's gold slider bars and supports controller navigation
 with mouse mode off. Opening it switches mouse mode off and releases held clicks;
 press your configured toggle again after closing settings to resume.

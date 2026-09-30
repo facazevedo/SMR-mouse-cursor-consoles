@@ -34,6 +34,12 @@ CreateRealTimeThread(function()
             if row.context.id == "Controls" then row:OnPress(); break end
         end
         Sleep(150)
+        local native_number
+        for _, row in ipairs(host:ResolveId("idList")) do
+            if row.idSlider then native_number = row; break end
+        end
+        local native_scale = native_number.idName.scale
+        local native_slider_width = native_number.idSlider.box:sizex()
         local dlg = m.OpenSettings(host)
         Sleep(150)
         check(dlg.window_state == "open" and not m.active, "settings open without mouse mode")
@@ -42,11 +48,19 @@ CreateRealTimeThread(function()
         local panel, preview = dlg:ResolveId("idPanel"), dlg:ResolveId("idPreview")
         check(#list == 15 and list.VScroll == "" and not list.MouseScroll,
             "all fifteen settings appear together without a scrollbar or mouse scrolling")
-        check(list[15].box:maxy() <= panel.box:maxy() and dlg:ResolveId("idHelp").box:maxy() <= panel.box:maxy(),
-            "last setting and instructions fit above the footer")
+        check(list[15].box:maxy() <= panel.box:maxy(), "all native-size settings fit above the footer")
+        check(list[1].idName.scale == native_scale and list[5].idText.scale == native_scale
+            and list[1].idSlider.box:sizex() == native_slider_width,
+            "option text and sliders use the same size as native Controls")
+        check(#preview == 1 and not dlg:ResolveId("idStatus"):GetVisible(),
+            "preview contains only the cursor and no permanent status text")
         check(preview.box:minx() > list.box:maxx() and preview.box:sizex() == preview.box:sizey()
             and preview.box:sizey() > panel.box:sizey() / 2,
             "right preview is a large square with equal width and height")
+        local screen_width, screen_height = UIL.GetScreenSizeXY()
+        check(preview.box:minx() + preview.box:maxx() == 2 * MulDivRound(screen_width, 3, 4)
+            and preview.box:miny() + preview.box:maxy() == 2 * MulDivRound(screen_height, 1, 2),
+            "square is centered in the right half of the screen")
         local first_y = list[1].box:miny()
         for i = 1, 14 do list:OnShortcut("DPadDown", "gamepad") end
         check(list:GetFocusedItem() == 15 and list[1].box:miny() == first_y,
@@ -71,6 +85,27 @@ CreateRealTimeThread(function()
         Sleep(80)
         check(dlg.preview_motion.x > start, "left stick moves preview immediately while all settings are visible")
         fake.CurrentState[0].LeftThumb = point(0,0)
+        local saved_speed, saved_smoothing = dlg.draft:GetProperty("CURSOR_SPEED"), dlg.draft:GetProperty("SMOOTHING_MS")
+        dlg.draft:SetProperty("CURSOR_SPEED", 4000)
+        dlg.draft:SetProperty("SMOOTHING_MS", 0)
+        for _, corner in ipairs({
+            { name = "bottom right", x = 32767, y = -32767, right = true, bottom = true },
+            { name = "top right", x = 32767, y = 32767, right = true },
+            { name = "top left", x = -32767, y = 32767 },
+            { name = "bottom left", x = -32767, y = -32767, bottom = true },
+        }) do
+            fake.CurrentState[0].LeftThumb = point(corner.x, corner.y)
+            Sleep(600)
+            local cursor = dlg:ResolveId("idPreviewCursor").box
+            local bounds = preview.content_box
+            local dx = corner.right and cursor:maxx() - bounds:maxx() or cursor:minx() - bounds:minx()
+            local dy = corner.bottom and cursor:maxy() - bounds:maxy() or cursor:miny() - bounds:miny()
+            check(dx >= -2 and dx <= 2 and dy >= -2 and dy <= 2
+                and bounds:sizex() == bounds:sizey(), "cursor reaches " .. corner.name .. " without shrinking the square")
+        end
+        fake.CurrentState[0].LeftThumb = point(0,0)
+        dlg.draft:SetProperty("CURSOR_SPEED", saved_speed)
+        dlg.draft:SetProperty("SMOOTHING_MS", saved_smoothing)
         check(_InternalTranslate(list[5].Text) == "Stick response: Linear", "choice labels render readable text")
         list[5]:OnShortcut("LeftThumbRight", "gamepad")
         check(dlg.draft:GetProperty("RESPONSE_CURVE") == "Linear", "left stick cannot change choice settings")
@@ -85,6 +120,7 @@ CreateRealTimeThread(function()
         dlg.draft:SetProperty("TOGGLE_BUTTON", "ButtonA")
         terminal.Shortcut("ButtonX", "gamepad")
         check(m.settings_dialog == dlg and m.Config.CURSOR_SPEED == original_options.CURSOR_SPEED, "duplicate bindings block Apply atomically")
+        check(dlg:ResolveId("idStatus"):GetVisible(), "validation errors remain visible after removing instructions")
         terminal.Shortcut("ButtonY", "gamepad")
         check(dlg.draft:GetProperty("CURSOR_SPEED") == m.SettingDefaults.CURSOR_SPEED
             and dlg.draft:GetProperty("CURSOR_SIZE") == 100, "Reset restores draft defaults")

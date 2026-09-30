@@ -1,14 +1,16 @@
-# Version 10: cursor settings
+# Version 11: cursor settings
 
 Entry point: **Options > Controls > Mouse Cursor Consoles**, while the mod is
 enabled. Continuous values use the game's `PropNumber` control, including the
 same gold bar/thumb artwork as the normal Controls screen.
 
-All 15 settings appear in one left column without scrolling: normal speed,
+All 15 settings appear at native Controls size in one left column without scrolling: normal speed,
 absolute fast speed, cursor size, dead zone, response curve, smoothing, color,
 remembered position and seven distinct button bindings. Back, Default and Apply
-remain in the native bottom action bar. The large square test area on the right
-responds to the left stick immediately. Toggle
+remain in the native bottom action bar. The large square test area is centered
+in the right half of the screen and responds to the left stick immediately.
+Permanent instructions and preview-status text are removed; save/validation
+errors appear only when needed. Toggle
 choices are L3/R3 to keep ordinary menu navigation available. Analog triggers are
 available for the polled boost modifier only. The README documents ranges/defaults.
 
@@ -48,7 +50,7 @@ available for the polled boost modifier only. The README documents ranges/defaul
 - Open settings modals and Controls entries are cleaned up on shutdown/reload.
   Parent closure removes the modal; the preview ends with the page.
 
-Version in `metadata.lua` is **10**. Both manifests load eight code files in the same
+Version in `metadata.lua` is **11**. Both manifests load eight code files in the same
 order, with settings data before the cursor and settings UI before entry hooks.
 `items.lua` registers code only. Private property definitions belong to
 `mcc_settings.lua`; metadata advertises no generic options. Deployment has 11 files.
@@ -58,7 +60,45 @@ cover validation, loading, save errors/requests, applied values, and dialog life
 they use the existing debug gate. There is no unconditional mod debug output.
 No original cursor artwork or TEST. NOT READY. preview image was changed.
 
-## Version 10 verification (2026-09-29)
+## Version 11 verification (2026-09-29)
+
+Restored the controls from 85% to their native scale while retaining compact
+row spacing. Removed permanent instruction/status labels. A mod-owned layout
+callback uses the native `SetLayoutSpace` API to center the 1:1 preview at three
+quarters of screen width and half of screen height, clear of the settings,
+title and footer. Layout size/center diagnostics use `DEBUG_LOGS == true`.
+
+Fixed incomplete preview travel: `XWindow.UpdateMeasure` includes margins in
+`measure_width/height`, so subtracting those values also subtracted the cursor's
+current offset. Preview bounds now subtract the rendered cursor box, clamp on
+every frame, and account for the motion function's inclusive final pixel. The
+shared gameplay cursor/motion implementation is unchanged.
+
+Read-only game references: `XWindow.UpdateMeasure`, `SetBox`, `OnLayoutComplete`
+and `SetLayoutSpace`, plus `XAspectWindow` and the exported `Min` API. No game,
+protected, generated, third-party or image source was edited. Load order and
+both explicit false debug flags are unchanged.
+
+Passed 35 native settings and 25 native entry/restoration checks. New assertions
+compare text/slider sizes with native Controls, verify square geometry and screen
+centering, drive the cursor to all four corners, and retain visible validation
+errors. All 15 rows remain visible without scrolling. Visual review at 3840x2043
+confirmed a 1398x1398 square centered at (2880,1022), with no preview text.
+Ignored evidence: `tests/results/settings-v11-centered-square.png`,
+`native-settings-v11.json` and `native-entry-v11.json`.
+
+All 17 payload/test Lua files passed syntax checks, along with 81 behavior and
+48 settings/motion host checks. All 11 deployment files were hash-verified.
+Reviewed retail startup log `Mars.exe-20260929-21.42.12-6aad2d75.log` and debug log
+`MarsDebug.exe-20260929-21.50.05-6aad2de6.log`; the latter had no Lua errors or
+assertions. Logs were retained.
+
+Manual check: restart, open the cursor settings, compare option size with Controls,
+and move the stick to every corner of the centered square. Confirm all rows fit,
+then check Default, Apply and Back. Physical console controllers, console rendering
+and other display sizes remain unverified.
+
+## Historical version 10 verification (2026-09-29)
 
 Removed the Advanced page and scrollbar. Native controls at 85% scale fit all 15
 rows in the left column; the right preview uses the native `XAspectWindow` with

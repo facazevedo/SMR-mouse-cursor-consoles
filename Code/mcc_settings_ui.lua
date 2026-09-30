@@ -50,34 +50,43 @@ function MCCSettingsDialog:Init()
         OnAction = function() self:ApplyDraft() end }, self)
     local panel = XWindow:new({ Id = "idPanel", Dock = "box",
         Margins = box(113, self.content_margins:miny(), 79, self.content_margins:maxy()) }, self)
-    -- Keep native controls readable while fitting all fifteen rows without scrolling.
+    -- Native control size, with compact spacing to fit all fifteen rows.
     local column = XWindow:new({ Id = "idSettingsColumn", Dock = "left",
-        MinWidth = 744, MaxWidth = 744, LayoutMethod = "VList", LayoutVSpacing = 16 }, panel)
+        MinWidth = 875, MaxWidth = 875, LayoutMethod = "VList", LayoutVSpacing = 16 }, panel)
     XList:new({ Id = "idList", MinWidth = 875, MaxWidth = 875,
-        ScaleModifier = point(850, 850), LeftThumbScroll = false,
+        LeftThumbScroll = false,
         BorderWidth = 0, Padding = box(0, 0, 0, 0),
         Background = 0, FocusedBackground = 0, LayoutVSpacing = 6,
         MouseScroll = false, ForceInitialSelection = true }, column)
-    XText:new({ Translate = true, Id = "idHelp", TextStyle = "ListItem4", HandleMouse = false,
-        Padding = box(0, 2, 0, 2), MaxWidth = 744, ScaleModifier = point(850, 850),
-        Text = Untranslated("D-pad: choose and adjust.\nSpeeds are pixels/sec at 1080p.") }, column)
-    local preview_column = XWindow:new({ Id = "idPreviewColumn", Dock = "box",
-        Margins = box(28, 0, 60, 0) }, panel)
-    XText:new({ Translate = true, TextStyle = "PropName", Dock = "top",
-        Text = Untranslated("TEST AREA"), HandleMouse = false,
-        Padding = box(0, 0, 0, 0) }, preview_column)
-    XText:new({ Translate = true, TextStyle = "ListItem4", Dock = "top",
-        Text = Untranslated("Left stick: move. Hold your boost button for fast speed."),
-        HandleMouse = false, Padding = box(0, 2, 0, 12) }, preview_column)
+    -- Keep validation/save errors available without permanent instruction text.
     XText:new({ Translate = true, Id = "idStatus", TextStyle = "ListItem4", HandleMouse = false,
-        Dock = "bottom", Padding = box(0, 12, 0, 0),
-        Text = Untranslated("Changes are previewed here before you apply them.") }, preview_column)
-    local preview = XAspectWindow:new({ Id = "idPreview", Dock = "box",
-        Aspect = point(1, 1), Fit = "smallest", HAlign = "left", VAlign = "top",
-        Background = RGBA(35, 52, 68, 100), Clip = "self", HandleMouse = false }, preview_column)
+        Visible = false, FoldWhenHidden = true, Padding = box(0, 0, 0, 0), MaxWidth = 875 }, column)
+    local preview = XAspectWindow:new({ Id = "idPreview", Dock = "ignore",
+        Aspect = point(1, 1), Fit = "smallest", HAlign = "center", VAlign = "center",
+        Background = RGBA(35, 52, 68, 100), Clip = "self", HandleMouse = false }, self)
     XImage:new({ Id = "idPreviewCursor", HAlign = "left", VAlign = "top",
         HandleMouse = false, Image = const.DefaultMouseCursor }, preview)
     self:BuildRows()
+end
+
+function MCCSettingsDialog:OnLayoutComplete()
+    -- Position in screen pixels: centered in the right half, clear of the
+    -- Options title/footer and the native-size settings column.
+    local width, height = UIL.GetScreenSizeXY()
+    local center_x, center_y = MulDivRound(width, 3, 4), MulDivRound(height, 1, 2)
+    local panel = self:ResolveId("idPanel").box
+    local column = self:ResolveId("idSettingsColumn").box
+    local gap = MulDivRound(28, self.scale:x(), 1000)
+    local half_width = Min(center_x - Max(MulDivRound(width, 1, 2), column:maxx() + gap),
+        panel:maxx() - center_x)
+    local half_height = Min(center_y - panel:miny(), panel:maxy() - center_y)
+    local half = Max(0, Min(half_width, half_height))
+    local area = self:ResolveId("idPreview")
+    local previous = area.box
+    area:SetLayoutSpace(center_x - half, center_y - half, 2 * half, 2 * half)
+    if previous ~= area.box then
+        M.Log("SettingsUI", "preview_layout", { side = 2 * half, center_x = center_x, center_y = center_y })
+    end
 end
 
 function MCCSettingsDialog:BuildRows()
@@ -130,13 +139,17 @@ end
 function MCCSettingsDialog:ResetDraft()
     for _, prop in ipairs(self.draft:GetProperties()) do self.draft:SetProperty(prop.id, prop.default) end
     self:BuildRows()
-    self:ResolveId("idStatus"):SetText(Untranslated("Defaults restored in preview. Choose Apply to save."))
+    self:ResolveId("idStatus"):SetVisible(false)
 end
 
 function MCCSettingsDialog:ApplyDraft()
     local ok, reason = M.SaveSettings(self.draft)
     if ok then self:Close("apply")
-    else self:ResolveId("idStatus"):SetText(Untranslated(reason)) end
+    else
+        local status = self:ResolveId("idStatus")
+        status:SetText(Untranslated(reason))
+        status:SetVisible(true)
+    end
 end
 
 function MCCSettingsDialog:GoBack()
@@ -168,6 +181,12 @@ function MCCSettingsDialog:Open(...)
                 M.StyleCursor(image, cfg)
                 last_size, last_color = cfg.CURSOR_SIZE, cfg.CURSOR_COLOR
             end
+            -- measure_width/height include the moving margins. The rendered
+            -- box excludes them, so the travel bounds stay fixed at every edge.
+            local max_x = Max(0, area.content_box:sizex() - image.box:sizex())
+            local max_y = Max(0, area.content_box:sizey() - image.box:sizey())
+            self.preview_motion.x = Clamp(self.preview_motion.x, 0, max_x * 1000)
+            self.preview_motion.y = Clamp(self.preview_motion.y, 0, max_y * 1000)
             local id = type(ActiveController) == "number" and ActiveController or 0
             local connected = XInput.IsControllerConnected(id)
             if id ~= last_controller or connected ~= last_connected then
@@ -178,11 +197,10 @@ function MCCSettingsDialog:Open(...)
                 local state = XInput.CurrentState[id]
                 if state and state.LeftThumb then
                     local ax, ay = state.LeftThumb:xy()
-                    local width, height = area.content_box:sizex(), area.content_box:sizey()
                     local _, screen_height = UIL.GetScreenSizeXY()
                     local boost = M.Config.ENABLE_SPEED_BOOST == true and XInput.IsCtrlButtonPressed(id, cfg.SPEED_BOOST_BUTTON) == true
                     M.AdvanceCursor(self.preview_motion, ax, ay, state.LeftThumb:Len2D(), time - last,
-                        Max(1, width - image.measure_width), Max(1, height - image.measure_height), boost, cfg, screen_height)
+                        max_x + 1, max_y + 1, boost, cfg, screen_height)
                 end
             end
             local x = MulDivRound(self.preview_motion.x, 1, area.scale:x())
