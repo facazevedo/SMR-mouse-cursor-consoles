@@ -1,9 +1,9 @@
 # Test-build publishing validation
 
-## Current: version 7 (local payload)
+## Current: version 8 (local payload)
 
-The native Options layout and text-alignment update is deployed locally. Required metadata and the
-existing TEST BUILD - NOT READY image are retained. No v7 native package or store
+The native Options layout and Controls-entry alignment update is deployed locally. Required metadata and the
+existing TEST BUILD - NOT READY image are retained. No v8 native package or store
 upload was produced for this UI change. Rebuild the package before publishing;
 the verified v5 package below contains the previous settings layout.
 See [settings validation](SETTINGS.md).

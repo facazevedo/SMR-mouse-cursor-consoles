@@ -1,4 +1,4 @@
-# Version 7: cursor settings
+# Version 8: cursor settings
 
 Entry point: **Options > Controls > Mouse Cursor Consoles**, while the mod is
 enabled. Continuous values use the game's `PropNumber` control, including the
@@ -45,7 +45,7 @@ available for the polled boost modifier only. The README documents ranges/defaul
 - Open settings modals and Controls entries are cleaned up on shutdown/reload.
   Parent closure removes the modal; focus loss exits preview testing.
 
-Version in `metadata.lua` is **7**. Both manifests load eight code files in the same
+Version in `metadata.lua` is **8**. Both manifests load eight code files in the same
 order, with settings data before the cursor and settings UI before entry hooks.
 `items.lua` registers code only. Private property definitions belong to
 `mcc_settings.lua`; metadata advertises no generic options. Deployment has 11 files.
@@ -55,7 +55,41 @@ cover validation, loading, save errors/requests, applied values, and dialog life
 they use the existing debug gate. There is no unconditional mod debug output.
 No original cursor artwork or TEST. NOT READY. preview image was changed.
 
-## Version 7 verification (2026-09-29)
+## Version 8 verification (2026-09-29)
+
+The Mouse Cursor Consoles entry in native Controls now uses the same mod-owned
+menu-row builder as the aligned Test cursor and Advanced settings rows. That
+builder removes unused inherited label/icon spacing and keeps the label margin
+stable during hover. The entry retains its ID, first-row order, controller
+activation, rebuild cleanup and settings route. Cursor and preference behavior
+are unchanged.
+
+The first owned `MarsDebug.exe` process crashed during startup before the mod
+loaded. Its WER report records an `ntdll.dll` heap exception (`c0000374`);
+there is no Lua error or UI execution in its 628-byte game log. The crash evidence
+was preserved under `smr-harness/logs/incidents/20260930-011006-18d9f3ffc391e28c/`.
+A fresh owned process loaded version 8 and passed all 24 native Controls-entry
+checks, including initial, hover and focus alignment, controller opening,
+return focus, and cleanup. The actual PGMainMenu Controls rendering was
+visually reviewed: the mod entry and Invert Mouse Wheel label both measured
+x=313 at 3840x2043. The final debug log had no Lua errors or assertions.
+Evidence is ignored under `tests/results/native-entry-v8.json` and
+`tests/results/controls-v8-aligned.png`.
+
+Lua syntax passed for all payload files and tests; host suites passed 81
+behavior and 48 settings checks. All 11
+payload files were deployed and hash-verified in the local mod folder. The
+existing `DEBUG_LOGS=false` gate covers the Controls-entry alignment diagnostic;
+`DEBUG_INPUT=false` is unchanged. The read-only game references were
+MenuEntrySmall, PropNumber and OptionsContentWindow. Game, protected, generated,
+third-party and image files were not edited. Reviewed game and harness logs were
+retained. No v8 native package or mod-store upload was made.
+
+Manual check: restart the game, open Options > Controls, and compare Mouse Cursor
+Consoles with Invert Mouse Wheel before selecting anything; then hover/select it
+and confirm the left edge remains aligned. Console rendering remains unverified.
+
+## Historical version 7 verification (2026-09-29)
 
 Test cursor, Advanced settings, the D-pad instructions, test-area label and
 preview status now share the Normal cursor speed text column on initial opening.

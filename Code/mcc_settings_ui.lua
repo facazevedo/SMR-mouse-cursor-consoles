@@ -1,8 +1,7 @@
 -- A transparent child page in the existing Options shell.
 -- Reuses native title, action bar and sliders; no shared classes are patched.
 local M = MCC
-local row_margins = box(18, 0, 0, 0)
-local text_padding = box(0, 2, 0, 2)
+local row_indent = 18
 M.settings_entries = {}
 DefineClass.MCCSettingsDialog = {
     __parents = { "XDialog" },
@@ -13,11 +12,16 @@ DefineClass.MCCSettingsDialog = {
     hidden_controls = false, content_margins = false,
 }
 
-local function button(parent, text, action)
-    local row = MenuEntrySmall:new({ Text = Untranslated(text), TextStyle = "PropName",
-        Margins = row_margins, LayoutHSpacing = 0, OnPress = action,
-        -- Keep the native rollover visuals without its horizontal margin shift.
-        OnSetRollover = XTextButton.OnSetRollover }, parent)
+local function button(parent, text, action, properties)
+    local row_properties = properties or {}
+    row_properties.Text = Untranslated(text)
+    row_properties.TextStyle = "PropName"
+    row_properties.Margins = box(row_indent, 0, 0, 0)
+    row_properties.LayoutHSpacing = 0
+    row_properties.OnPress = action
+    -- Keep the native rollover visuals without its horizontal margin shift.
+    row_properties.OnSetRollover = XTextButton.OnSetRollover
+    local row = MenuEntrySmall:new(row_properties, parent)
     -- MenuEntrySmall renders idText, not the inherited empty label/icon.
     row.idLabel:SetDock("ignore")
     row.idIcon:SetDock("ignore")
@@ -53,19 +57,19 @@ function MCCSettingsDialog:Init()
         VScroll = "idScroll", MouseScroll = true, ForceInitialSelection = true }, list_host)
     local scroll = ScrollbarNew:new({ Id = "idScroll", Target = "idList" }, list_host)
     -- The native scrollbar reserves its column even when hidden.
-    local text_margins = box(row_margins:minx() + scroll:GetMinWidth(), 0, 0, 0)
+    local text_margins = box(row_indent + scroll:GetMinWidth(), 0, 0, 0)
     XText:new({ Translate = true, Id = "idHelp", TextStyle = "ListItem4", HandleMouse = false,
-        Margins = text_margins, Padding = text_padding, MaxWidth = 850,
+        Margins = text_margins, Padding = box(0, 2, 0, 2), MaxWidth = 850,
         Text = Untranslated("D-pad: choose and adjust. Apply saves changes. Speeds are pixels/sec at 1080p.") }, panel)
     local preview = XWindow:new({ Id = "idPreview", MinHeight = 135, MaxHeight = 135,
         Margins = text_margins, Background = RGBA(35, 52, 68, 100),
         Clip = "self", HandleMouse = false }, panel)
     XText:new({ Translate = true, TextStyle = "ListItem4", Text = Untranslated("TEST AREA  -  choose Test cursor to move here"),
-        HandleMouse = false, Padding = text_padding }, preview)
+        HandleMouse = false, Padding = box(0, 2, 0, 2) }, preview)
     XImage:new({ Id = "idPreviewCursor", HAlign = "left", VAlign = "top",
         HandleMouse = false, Image = const.DefaultMouseCursor }, preview)
     XText:new({ Translate = true, Id = "idStatus", TextStyle = "ListItem4", HandleMouse = false,
-        Margins = text_margins, Padding = text_padding, MaxWidth = 850,
+        Margins = text_margins, Padding = box(0, 2, 0, 2), MaxWidth = 850,
         Text = Untranslated("Changes are previewed here before you apply them.") }, panel)
     self:BuildRows()
 end
@@ -86,7 +90,7 @@ function MCCSettingsDialog:BuildRows()
     for _, prop in ipairs(properties) do
         if wanted[prop.id] then
             if prop.editor == "number" then
-                PropNumber:new({ Margins = row_margins, RolloverText = Untranslated(prop.help or ""),
+                PropNumber:new({ Margins = box(row_indent, 0, 0, 0), RolloverText = Untranslated(prop.help or ""),
                     RolloverTitle = prop.name }, list, ModOptionEditorContext(self.draft, prop))
             else
                 local row
@@ -280,15 +284,12 @@ function OnMsg.XWindowRecreated(list)
     for entry in pairs(M.settings_entries) do
         if entry.window_state == "destroying" then M.settings_entries[entry] = nil end
     end
-    local entry = MenuEntrySmall:new({
-        Id = "idMCCControlsEntry", ZOrder = -1, Margins = box(18, 0, 0, 0),
-        Text = Untranslated("Mouse Cursor Consoles"), TextStyle = "PropName",
-        OnPress = function() M.OpenSettings(host) end,
-    }, list)
+    local entry = button(list, "Mouse Cursor Consoles", function() M.OpenSettings(host) end,
+        { Id = "idMCCControlsEntry", ZOrder = -1 })
     M.settings_entries[entry] = host
     list:SortChildren()
     entry:Open()
-    M.Log("SettingsUI", "controls_entry_added", {})
+    M.Log("SettingsUI", "controls_entry_added", { label_alignment = "controls_column" })
 end
 
 function M.RemoveSettingsEntries(host)

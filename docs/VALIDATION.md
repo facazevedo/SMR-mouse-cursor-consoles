@@ -1,5 +1,12 @@
 # Validation record
 
+## Version 8: Controls entry alignment
+
+The Mouse Cursor Consoles entry now aligns with vanilla Controls labels on the
+first visit and during hover/focus. A fresh debug-game run passed all 24 native
+entry checks; see [settings validation](SETTINGS.md) for the screenshot, startup
+crash evidence and manual console check.
+
 ## Version 7: settings text alignment
 
 The settings action rows, instructions, preview area and status share the slider
