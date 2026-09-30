@@ -4,11 +4,11 @@ return PlaceObj('ModDef', {
     'author', "fredware",
     'short_description', "TEST BUILD - NOT READY. Toggle a left-stick mouse cursor with R3; hold L3 / Xbox left-stick click for faster movement. PS5 and Xbox Series testing required.",
     'image', "Mod/MouseCursorConsoles/Images/test-not-ready.png",
-    'version', 12,
+    'version', 13,
     'lua_revision', 350453,
     'saved_with_revision', 405907,
     'description', "Toggle a left-stick mouse cursor with R3 / right-stick click from the main menu (Tutorial, New Game, Load Game), setup screens, or gameplay. Mouse mode stays on between screens. Hold L3 / Xbox left-stick click for faster movement (default 2.5x). Configure speeds, size, response, smoothing and bindings in Options > Controls > Mouse Cursor Consoles. Cross / A: left click; Circle / B: right click; L1 / LB: wheel up; R1 / RB: wheel down; Options / Menu: Escape. R3 is reserved for the toggle while this mod is enabled. Uses a temporary PC interface and restores previous controls when switched off. PS5 and Xbox Series X|S runtime testing is still required; this release is not console-certified.",
-    'last_changes', "Matched native row spacing; labeled the square preview and corrected visible cursor edge limits; added speed units and native stick response help; changed default boost to hold L3 / Xbox left-stick click.",
+    'last_changes', "Replaced the small cursor bitmap with a 10x-resolution vector-source arrow in mouse mode and the preview, preserving size, tint, click position and edge limits.",
     'default_options', {},
     'code', {
         "Code/mcc_config.lua",

@@ -1,4 +1,4 @@
-# Version 12: cursor settings
+# Version 13: cursor settings
 
 Entry point: **Options > Controls > Mouse Cursor Consoles**, while the mod is
 enabled. Continuous values use the game's `PropNumber` control, including the
@@ -15,6 +15,46 @@ instructions and preview-status text remain removed; save/validation errors appe
 only when needed. Toggle
 choices are L3/R3 to keep ordinary menu navigation available. Analog triggers are
 available for the polled boost modifier only. The README documents ranges/defaults.
+
+## Version 13: sharp cursor artwork (2026-09-29)
+
+- Added mod-owned `Assets/mcc_cursor.svg` and its 240x260 transparent PNG export
+  `Images/mcc_cursor.png`. This is 10x the original arrow's visible resolution,
+  with tight alpha bounds `(0, 0, 240, 260)` and the same tip/origin. The native
+  `XImage` renderer downsamples it at normal sizes and at 300% on a 4K display;
+  this is vector-source artwork exported to a bitmap, not runtime SVG rendering.
+- `mcc_config.lua` owns the image path and resolution factor. `mcc_settings.lua`
+  compensates image scale so cursor size settings retain their meaning and logs
+  artwork/size/tint only with `DEBUG_LOGS == true`. `mcc_cursor.lua` and the
+  `MouseCursor` lifecycle message map the default arrow to this image. Other native
+  action/rollover images retain their original scale. The preview uses the same
+  image without the version-12 crop rectangle; click coordinates are unchanged.
+- `tools/render_cursor.py` reproducibly exports the SVG using the development-only
+  dependency `resvg-py==0.5.0`. The committed export is intentionally deployed;
+  no Python, SVG renderer, or extra runtime package is required by the mod.
+- **84 behavior + 56 settings/motion host checks passed.** Native Windows suites:
+  **22 mouse-input, 41 settings, and 25 Controls-entry checks passed**. Input tests
+  simulate LS click for boost and explicitly select the fixture controller.
+  An earlier hot-reloaded test session failed to activate its test cursor; that
+  run was not counted. A fresh owned debug process passed all suites.
+- Native settings checks exercise the high-resolution image, maximum 300% preview
+  size, all four corners, and square geometry. Native mouse-mode checks verify
+  image loading, movement, input, pointer coordinates and restoration. Host checks
+  additionally verify switching to native rollover art and back without shrinking
+  it. A rendered 3840x2043 preview at 300% was visually inspected: arrow edges are
+  smooth and the existing blue/silver appearance is preserved.
+- `luac -p` passed for all payload Lua and changed Lua tests. Load order is unchanged.
+  Deployment hash-verified **12 payload files**, including the new PNG, in the
+  existing local MouseCursorConsoles mod directory; no destination files deleted.
+- Read-only game references included `CommonLua/X/XImage.lua`, mod content paths,
+  native terminal input and cursor lifecycle code. No original assets, game files,
+  third-party, generated game code, or harness source was modified.
+- Reviewed `MarsDebug.exe-20260929-22.20.17-6aad2de6.log` and
+  `daemon-20260930-022016.log`: no Lua-error, assertion, image-load-failure or
+  sharing-violation matches in the final session. Logs retained.
+- PS5/Xbox hardware and full save/reload gameplay remain untested. Restart the
+  game after deployment, try cursor size 100% and 300%, check preview edges and
+  LS boost, then toggle mouse mode and hover native controls to check cursor changes.
 
 ## Version 12 validation (2026-09-29)
 

@@ -78,8 +78,10 @@ CreateRealTimeThread(function()
             and list[5].RolloverAnchor == "right" and list[5].RolloverOnFocus
             and _InternalTranslate(list[5].RolloverText):find("Gradual: finer control", 1, true),
             "stick response uses the same right-side explanation tooltip as Smoothing")
-        check(dlg:ResolveId("idPreviewCursor").ImageRect == box(0, 0, 24, 26),
-            "cursor travel bounds exclude verified transparent padding in the default arrow")
+        check(dlg:ResolveId("idPreviewCursor"):GetImage() == m.CursorArtwork.Image
+            and dlg:ResolveId("idPreviewCursor"):CalcSrcRect():sizex() == 240
+            and dlg:ResolveId("idPreviewCursor"):CalcSrcRect():sizey() == 260,
+            "preview uses the tightly bounded high-resolution cursor artwork")
         local first_y = list[1].box:miny()
         for i = 1, 14 do list:OnShortcut("DPadDown", "gamepad") end
         check(list:GetFocusedItem() == 15 and list[1].box:miny() == first_y,
@@ -96,9 +98,9 @@ CreateRealTimeThread(function()
         list:OnShortcut("LeftThumbDown", "gamepad")
         check(not list.LeftThumbScroll and list:GetFocusedItem() == selected, "left stick does not navigate basic rows")
         check(m.Config.CURSOR_SPEED == original_options.CURSOR_SPEED, "draft does not alter runtime before apply")
-        dlg.draft:SetProperty("CURSOR_SIZE", 180)
+        dlg.draft:SetProperty("CURSOR_SIZE", 300)
         Sleep(50)
-        check(dlg:ResolveId("idPreviewCursor"):GetImageScale() == point(1800,1800), "size previews before applying")
+        check(dlg:ResolveId("idPreviewCursor"):GetImageScale() == point(300,300), "maximum cursor size previews before applying")
         local start = dlg.preview_motion.x
         fake.CurrentState[0].LeftThumb = point(32767,0)
         Sleep(80)

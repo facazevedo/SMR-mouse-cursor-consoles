@@ -1,7 +1,7 @@
 # Mouse Cursor Consoles
 
 A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor and
-temporarily uses the PC interface. Current release: metadata version **12**.
+temporarily uses the PC interface. Current release: metadata version **13**.
 
 | Action | PS5 | Xbox Series X/S |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ shortcuts are outside this mod's mouse bindings.
 For local Windows testing, run `powershell -File tools/deploy.ps1` from this
 project (Lua 5.4 `luac` must be on PATH), then enable **Mouse Cursor Consoles** in
 the game mod manager. The script installs only `metadata.lua`, `items.lua`, and
-the eight files under `Code/`, and `Images/test-not-ready.png` into
+the eight files under `Code/`, and both PNG files under `Images/` into
 `%APPDATA%/Surviving Mars Relaunched/Mods/MouseCursorConsoles`.
 It verifies file hashes and does not delete destination files.
 
@@ -57,9 +57,9 @@ publication was performed. Paradox advertises cross-platform mod support on the
 [official game page](https://www.paradoxinteractive.com/games/surviving-mars-relaunched/about),
 but that does not certify this particular code mod on either console.
 
-Version 12 is deployed locally as a **TEST BUILD - NOT READY** release. Required
+Version 13 is deployed locally as a **TEST BUILD - NOT READY** release. Required
 metadata and the preview are present. The last verified native `.fpk` package is
-version 5; rebuild it before publishing version 12. See [publishing validation](docs/PUBLISHING.md).
+version 5; rebuild it before publishing version 13. See [publishing validation](docs/PUBLISHING.md).
 Use the Mod Editor's Paradox upload action while signed in to publish the deployed
 mod. Store acceptance and console functionality still require verification.
 
@@ -75,12 +75,15 @@ The page uses the native Options shell, retains the animated
 menu background, and shows **OPTIONS / CONTROLS / MOUSE CURSOR CONSOLES**.
 All 15 settings use standard Controls text and slider sizes in the left column
 without scrolling. A large square test area is centered in the right half of
-the screen. The cursor can reach every edge; permanent instructional text is removed.
+the screen, labeled **Test area**. The cursor can reach every edge; permanent instructional text is removed.
+The arrow uses a 240x260 image exported from a vector source, preserving its
+24x26 logical size. It stays sharp at up to 300% on a 4K display. Mouse mode and
+the preview use the same artwork; native action/rollover cursors keep their own artwork.
 It uses the game's gold slider bars and supports controller navigation
 with mouse mode off. Opening it switches mouse mode off and releases held clicks;
 press your configured toggle again after closing settings to resume.
 
-The page includes **Normal cursor speed**, **Fast cursor speed**, **Cursor
+The page includes **Normal cursor speed (px/s)**, **Fast cursor speed (px/s)**, **Cursor
 size %**, tuning, color and all button bindings. The native bottom bar
 provides **Back**, **Default**, and **Apply**. D-pad Up/Down selects a row; Left/Right adjusts
 a slider or choice. Mouse dragging works on sliders too. Fast speed is an absolute
@@ -95,7 +98,7 @@ speed and must be at least normal speed, not a fixed multiplier.
 | Smoothing | 0-150 ms | 0 (off) |
 
 The same column includes the dead-zone and smoothing sliders, Linear/Gradual stick
-response, White/Yellow/Cyan cursor tint, Remember cursor position, and all seven
+response (with a native right-side explanation tooltip), White/Yellow/Cyan cursor tint, Remember cursor position, and all seven
 button bindings. Gradual response makes small movements finer without changing
 full-stick speed. Smoothing softens changes in velocity but adds delay; releasing
 inside the dead zone stops immediately. Every binding must be distinct. Trigger
@@ -193,3 +196,12 @@ separately on PS5 and Xbox Series X/S:
    targets/cursors after repeated enable/unload/reload.
 7. Inspect fresh game logs before accepting console compatibility. Retain them;
    this project does not configure automatic log deletion.
+
+## Cursor artwork
+
+`Assets/mcc_cursor.svg` is the editable vector source. `Images/mcc_cursor.png`
+is its committed 10x-resolution export for the game's native `XImage` renderer.
+Rebuild intentionally with `python tools/render_cursor.py` after installing
+`resvg-py==0.5.0` as a development dependency; the mod needs no Python or extra
+runtime libraries. The source/export has tight alpha bounds and its tip at (0,0).
+No original game asset is modified.

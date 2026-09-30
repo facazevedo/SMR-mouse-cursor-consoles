@@ -14,14 +14,18 @@ DefineClass.MCCCursor = {
     UseClipBox = false,
 }
 
+function M.SetCursorArtwork(image, cursor)
+    image:SetImage(cursor == const.DefaultMouseCursor and M.CursorArtwork.Image or cursor)
+    M.StyleCursor(image, M.Config)
+end
+
 function MCCCursor:Init()
     local image = XImage:new({
         Id = "idCursor", HAlign = "left", VAlign = "top",
         HandleMouse = false, Clip = false, UseClipBox = false,
     }, self)
     image:AddDynamicPosModifier({ id = "cursor", target = "gamepad" })
-    image:SetImage(const.DefaultMouseCursor)
-    M.StyleCursor(image, M.Config)
+    M.SetCursorArtwork(image, const.DefaultMouseCursor)
 end
 
 function M.UpdateCursorVisibility()

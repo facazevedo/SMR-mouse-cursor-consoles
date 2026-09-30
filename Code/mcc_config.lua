@@ -2,6 +2,10 @@
 local previous = rawget(_G, "MCC")
 if previous and previous.Shutdown then previous.Shutdown("code_reload") end
 rawset(_G, "MCC", {
+    CursorArtwork = {
+        Image = CurrentModPath .. "Images/mcc_cursor.png",
+        ResolutionScale = 10, -- vector export: 240x260 pixels at 24x26 logical size
+    },
     Config = {
         ENABLE_MOUSE_MODE = true,
         ENABLE_SPEED_BOOST = true,

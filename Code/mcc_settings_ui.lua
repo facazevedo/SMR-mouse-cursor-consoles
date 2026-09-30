@@ -68,9 +68,8 @@ function MCCSettingsDialog:Init()
         TextStyle = "PropName", HAlign = "left", VAlign = "top", HandleMouse = false,
         Margins = box(12, 8, 0, 0), Padding = box(0, 0, 0, 0) }, preview)
     XImage:new({ Id = "idPreviewCursor", HAlign = "left", VAlign = "top",
-        -- The game's 40x40 default arrow has visible pixels in this 24x26 rect.
-        -- Exclude transparent right/bottom padding from preview travel bounds.
-        HandleMouse = false, Image = const.DefaultMouseCursor, ImageRect = box(0, 0, 24, 26) }, preview)
+        -- The vector export has tight visible bounds and a tip at (0,0).
+        HandleMouse = false, Image = M.CursorArtwork.Image }, preview)
     self:BuildRows()
 end
 

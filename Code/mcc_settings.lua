@@ -148,9 +148,14 @@ function M.SaveSettings(draft)
 end
 
 function M.StyleCursor(image, config)
-    local scale = config.CURSOR_SIZE * 10
+    -- Only the mod's vector export needs resolution compensation. Native
+    -- rollover/action cursors retain their original image dimensions.
+    local resolution_scale = image:GetImage() == M.CursorArtwork.Image and M.CursorArtwork.ResolutionScale or 1
+    local scale = MulDivRound(config.CURSOR_SIZE, 10, resolution_scale)
     image:SetImageScale(point(scale, scale))
     local color = config.CURSOR_COLOR
     image:SetImageColor(color == "Yellow" and RGB(255, 230, 80)
         or color == "Cyan" and RGB(80, 240, 255) or RGB(255, 255, 255))
+    M.Log("Cursor", "artwork_styled", { image = image:GetImage(), size = config.CURSOR_SIZE,
+        image_scale = scale, color = color })
 end

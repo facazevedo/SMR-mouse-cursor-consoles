@@ -6,7 +6,7 @@ $destination = [IO.Path]::GetFullPath((Join-Path $modsRoot $modId))
 if ((Split-Path -Parent $destination) -ne [IO.Path]::GetFullPath($modsRoot)) {
     throw "Deployment escaped Mods directory: $destination"
 }
-$payload = @('metadata.lua', 'items.lua', 'Images/test-not-ready.png') + @(Get-ChildItem (Join-Path $projectRoot 'Code') -File -Filter '*.lua' | ForEach-Object { 'Code/' + $_.Name })
+$payload = @('metadata.lua', 'items.lua', 'Images/test-not-ready.png', 'Images/mcc_cursor.png') + @(Get-ChildItem (Join-Path $projectRoot 'Code') -File -Filter '*.lua' | ForEach-Object { 'Code/' + $_.Name })
 foreach ($relative in $payload) {
     if (!(Test-Path -LiteralPath (Join-Path $projectRoot $relative) -PathType Leaf)) { throw "Missing payload file: $relative" }
     if ($relative.EndsWith('.lua')) {

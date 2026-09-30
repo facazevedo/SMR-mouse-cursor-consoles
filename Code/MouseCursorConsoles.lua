@@ -33,7 +33,7 @@ function OnMsg.GamepadUIStyleChanged()
     end
 end
 function OnMsg.MouseCursor(cursor)
-    if M.cursor then M.cursor.idCursor:SetImage(cursor) end
+    if M.cursor then M.SetCursorArtwork(M.cursor.idCursor, cursor) end
 end
 OnMsg.ShowMouseCursor = M.UpdateCursorVisibility
 function OnMsg.ModsReloading() M.Shutdown("mods_reloading") end

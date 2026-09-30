@@ -34,6 +34,7 @@ function window:Open() self.window_state = "open" end
 function window:delete() self.window_state = "destroying"; self.threads = {} end
 function window:SetVisible(v) self.visible = v end
 function window:SetImage(v) self.image = v end
+function window:GetImage() return self.image end
 function window:SetImageScale(v) self.image_scale = v end
 function window:SetImageColor(v) self.image_color = v end
 function window:AddDynamicPosModifier(v) self.modifier = v end
@@ -91,6 +92,7 @@ function ResumeRollover(reason) RolloverSuspendReasons[reason or false] = nil en
 function SuspendRollover(reason) RolloverSuspendReasons[reason or false] = true end
 function XDestroyRolloverWindow() end
 CurrentModId, CurrentModDef = "MouseCursorConsoles", { version = 1 }
+CurrentModPath = "Mod/MouseCursorConsoles/"
 function Untranslated(text) return text end
 function CreateMessageBox(_, _, text) events[#events + 1] = { event = "error", text = text } end
 local real_print = print
@@ -121,6 +123,14 @@ check(terminal.GetMousePos() == M.position, "Position queries must use authorita
 local cursor = M.cursor
 M.ApplyModBehavior(0)
 check(M.cursor == cursor and hr.XBoxLeftThumbLocked == 4, "Double enable must not duplicate cursor or locks")
+check(cursor.idCursor.image == M.CursorArtwork.Image and cursor.idCursor.image_scale == point(100, 100),
+    "High-resolution arrow preserves the default logical size")
+msg("MouseCursor", "UI/Cursors/Rollover.tga")
+check(cursor.idCursor.image == "UI/Cursors/Rollover.tga" and cursor.idCursor.image_scale == point(1000, 1000),
+    "Native action cursors keep their image and normal scale")
+msg("MouseCursor", const.DefaultMouseCursor)
+check(cursor.idCursor.image == M.CursorArtwork.Image and cursor.idCursor.image_scale == point(100, 100),
+    "Returning to the default arrow restores the sharp artwork and its scale")
 local x, y = M.MoveCursor(500000, 500000, 0, 0, 0, 16, 1920, 1080)
 check(x == 500000 and y == 500000, "Idle left stick must not drift")
 x, y = M.MoveCursor(x, y, 5999, 0, 5999, 16, 1920, 1080)
