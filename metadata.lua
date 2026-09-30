@@ -4,11 +4,11 @@ return PlaceObj('ModDef', {
     'author', "fredware",
     'short_description', "TEST BUILD - NOT READY. Toggle a left-stick mouse cursor with R3; hold L2/LT for faster movement. PS5 and Xbox Series testing required.",
     'image', "Mod/MouseCursorConsoles/Images/test-not-ready.png",
-    'version', 9,
+    'version', 10,
     'lua_revision', 350453,
     'saved_with_revision', 405907,
     'description', "Toggle a left-stick mouse cursor with R3 / right-stick click from the main menu (Tutorial, New Game, Load Game), setup screens, or gameplay. Mouse mode stays on between screens. Hold L2 / LT for faster movement (default 2.5x). Configure speeds, size, response, smoothing and bindings in Options > Controls > Mouse Cursor Consoles. Cross / A: left click; Circle / B: right click; L1 / LB: wheel up; R1 / RB: wheel down; Options / Menu: Escape. R3 is reserved for the toggle while this mod is enabled. Uses a temporary PC interface and restores previous controls when switched off. PS5 and Xbox Series X|S runtime testing is still required; this release is not console-certified.",
-    'last_changes', "The test-area cursor now responds to the left stick immediately on the basic settings page. Removed the separate Test cursor action; D-pad editing remains available.",
+    'last_changes', "All fifteen cursor settings now fit in one left column without scrolling. Removed the Advanced page and added a large square live test area on the right.",
     'default_options', {},
     'code', {
         "Code/mcc_config.lua",

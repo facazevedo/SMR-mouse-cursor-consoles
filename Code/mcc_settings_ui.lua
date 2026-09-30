@@ -7,16 +7,16 @@ DefineClass.MCCSettingsDialog = {
     __parents = { "XDialog" },
     Id = "idMCCSettings", IdNode = true, IsModal = true,
     Dock = "box", ZOrder = 2, Background = 0,
-    draft = false, settings_host = false, advanced = false,
+    draft = false, settings_host = false,
     preview_motion = false,
-    hidden_controls = false, content_margins = false,
+    hidden_controls = false, content_margins = false, shell_halign = false,
 }
 
 local function button(parent, text, action, properties)
     local row_properties = properties or {}
     row_properties.Text = Untranslated(text)
     row_properties.TextStyle = "PropName"
-    row_properties.Margins = box(row_indent, 0, 0, 0)
+    row_properties.Margins = row_properties.Margins or box(row_indent, 0, 0, 0)
     row_properties.LayoutHSpacing = 0
     row_properties.OnPress = action
     -- Keep the native rollover visuals without its horizontal margin shift.
@@ -48,84 +48,78 @@ function MCCSettingsDialog:Init()
     XAction:new({ ActionId = "mccApply", ActionName = T(5447, "APPLY"),
         ActionToolbar = "ActionBar", ActionGamepad = "ButtonX",
         OnAction = function() self:ApplyDraft() end }, self)
-    local panel = XWindow:new({ Id = "idPanel", HAlign = "left", VAlign = "top",
-        Margins = self.content_margins, LayoutMethod = "VList", LayoutVSpacing = 13 }, self)
-    local list_host = XWindow:new({ LayoutMethod = "HList" }, panel)
-    XList:new({ Id = "idList", MinWidth = 875, MaxWidth = 875, MaxHeight = 530,
+    local panel = XWindow:new({ Id = "idPanel", Dock = "box",
+        Margins = box(113, self.content_margins:miny(), 79, self.content_margins:maxy()) }, self)
+    -- Keep native controls readable while fitting all fifteen rows without scrolling.
+    local column = XWindow:new({ Id = "idSettingsColumn", Dock = "left",
+        MinWidth = 744, MaxWidth = 744, LayoutMethod = "VList", LayoutVSpacing = 16 }, panel)
+    XList:new({ Id = "idList", MinWidth = 875, MaxWidth = 875,
+        ScaleModifier = point(850, 850), LeftThumbScroll = false,
         BorderWidth = 0, Padding = box(0, 0, 0, 0),
-        Background = 0, FocusedBackground = 0, LayoutVSpacing = 13,
-        VScroll = "idScroll", MouseScroll = true, ForceInitialSelection = true }, list_host)
-    local scroll = ScrollbarNew:new({ Id = "idScroll", Target = "idList" }, list_host)
-    -- The native scrollbar reserves its column even when hidden.
-    local text_margins = box(row_indent + scroll:GetMinWidth(), 0, 0, 0)
+        Background = 0, FocusedBackground = 0, LayoutVSpacing = 6,
+        MouseScroll = false, ForceInitialSelection = true }, column)
     XText:new({ Translate = true, Id = "idHelp", TextStyle = "ListItem4", HandleMouse = false,
-        Margins = text_margins, Padding = box(0, 2, 0, 2), MaxWidth = 850,
-        Text = Untranslated("D-pad: choose and adjust. Apply saves changes. Speeds are pixels/sec at 1080p.") }, panel)
-    local preview = XWindow:new({ Id = "idPreview", MinHeight = 135, MaxHeight = 135,
-        Margins = text_margins, Background = RGBA(35, 52, 68, 100),
-        Clip = "self", HandleMouse = false }, panel)
-    XText:new({ Translate = true, TextStyle = "ListItem4", Text = Untranslated("TEST AREA  -  move the cursor with the left stick"),
-        HandleMouse = false, Padding = box(0, 2, 0, 2) }, preview)
+        Padding = box(0, 2, 0, 2), MaxWidth = 744, ScaleModifier = point(850, 850),
+        Text = Untranslated("D-pad: choose and adjust.\nSpeeds are pixels/sec at 1080p.") }, column)
+    local preview_column = XWindow:new({ Id = "idPreviewColumn", Dock = "box",
+        Margins = box(28, 0, 60, 0) }, panel)
+    XText:new({ Translate = true, TextStyle = "PropName", Dock = "top",
+        Text = Untranslated("TEST AREA"), HandleMouse = false,
+        Padding = box(0, 0, 0, 0) }, preview_column)
+    XText:new({ Translate = true, TextStyle = "ListItem4", Dock = "top",
+        Text = Untranslated("Left stick: move. Hold your boost button for fast speed."),
+        HandleMouse = false, Padding = box(0, 2, 0, 12) }, preview_column)
+    XText:new({ Translate = true, Id = "idStatus", TextStyle = "ListItem4", HandleMouse = false,
+        Dock = "bottom", Padding = box(0, 12, 0, 0),
+        Text = Untranslated("Changes are previewed here before you apply them.") }, preview_column)
+    local preview = XAspectWindow:new({ Id = "idPreview", Dock = "box",
+        Aspect = point(1, 1), Fit = "smallest", HAlign = "left", VAlign = "top",
+        Background = RGBA(35, 52, 68, 100), Clip = "self", HandleMouse = false }, preview_column)
     XImage:new({ Id = "idPreviewCursor", HAlign = "left", VAlign = "top",
         HandleMouse = false, Image = const.DefaultMouseCursor }, preview)
-    XText:new({ Translate = true, Id = "idStatus", TextStyle = "ListItem4", HandleMouse = false,
-        Margins = text_margins, Padding = box(0, 2, 0, 2), MaxWidth = 850,
-        Text = Untranslated("Changes are previewed here before you apply them.") }, panel)
     self:BuildRows()
 end
 
 function MCCSettingsDialog:BuildRows()
     local list = self:ResolveId("idList")
     list:Clear()
-    list.LeftThumbScroll = self.advanced
-    M.Log("SettingsUI", "rows_built", { advanced = self.advanced,
-        preview_left_stick = not self.advanced, native_left_stick_scroll = list.LeftThumbScroll })
     local category = self.settings_host.mode_param
     self:ResolveId("idTitle"):SetSubtitle(TLookupTag("<GameColorTagF>") .. Untranslated(" / ") ..
         TLookupTag("<GameColorCloseTagF>") .. category.caps_name ..
-        Untranslated(self.advanced and " / MOUSE CURSOR CONSOLES / ADVANCED" or " / MOUSE CURSOR CONSOLES"))
-    self:ResolveId("idPreview"):SetVisible(not self.advanced)
-    self:ResolveId("idPreview"):SetFoldWhenHidden(true)
+        Untranslated(" / MOUSE CURSOR CONSOLES"))
     local properties = self.draft:GetProperties()
-    local wanted = {}
-    for i, key in ipairs(M.SettingKeys) do if (i > 3) == self.advanced then wanted[key] = true end end
     for _, prop in ipairs(properties) do
-        if wanted[prop.id] then
-            if prop.editor == "number" then
-                PropNumber:new({ Margins = box(row_indent, 0, 0, 0), RolloverText = Untranslated(prop.help or ""),
-                    RolloverTitle = prop.name }, list, ModOptionEditorContext(self.draft, prop))
-            else
-                local row
-                local function label()
-                    local value = self.draft:GetProperty(prop.id)
-                    local text = type(value) == "boolean" and (value and "On" or "Off") or M.ButtonLabels[value] or tostring(value)
-                    return _InternalTranslate(prop.name) .. ": " .. text
+        if prop.editor == "number" then
+            PropNumber:new({ Margins = box(0, 0, 0, 0), RolloverText = Untranslated(prop.help or ""),
+                RolloverTitle = prop.name }, list, ModOptionEditorContext(self.draft, prop))
+        else
+            local row
+            local function label()
+                local value = self.draft:GetProperty(prop.id)
+                local text = type(value) == "boolean" and (value and "On" or "Off") or M.ButtonLabels[value] or tostring(value)
+                return _InternalTranslate(prop.name) .. ": " .. text
+            end
+            local function cycle(direction)
+                local value = self.draft:GetProperty(prop.id)
+                if prop.editor == "bool" then value = not value
+                else
+                    local index = 1
+                    for i, item in ipairs(prop.items) do if item.value == value then index = i end end
+                    index = (index - 1 + direction) % #prop.items + 1
+                    value = prop.items[index].value
                 end
-                local function cycle(direction)
-                    local value = self.draft:GetProperty(prop.id)
-                    if prop.editor == "bool" then value = not value
-                    else
-                        local index = 1
-                        for i, item in ipairs(prop.items) do if item.value == value then index = i end end
-                        index = (index - 1 + direction) % #prop.items + 1
-                        value = prop.items[index].value
-                    end
-                    self.draft:SetProperty(prop.id, value)
-                    row:SetText(Untranslated(label()))
-                end
-                row = button(list, label(), function() cycle(1) end)
-                row.OnShortcut = function(control, shortcut, source, ...)
-                    if shortcut == "DPadLeft" or shortcut == "LeftThumbLeft" then cycle(-1); return "break" end
-                    if shortcut == "DPadRight" or shortcut == "LeftThumbRight" then cycle(1); return "break" end
-                    return MenuEntrySmall.OnShortcut(control, shortcut, source, ...)
-                end
+                self.draft:SetProperty(prop.id, value)
+                row:SetText(Untranslated(label()))
+            end
+            row = button(list, label(), function() cycle(1) end, { Margins = box(0, 0, 0, 0) })
+            row.OnShortcut = function(control, shortcut, source, ...)
+                if shortcut == "DPadLeft" then cycle(-1); return "break" end
+                if shortcut == "DPadRight" then cycle(1); return "break" end
+                return MenuEntrySmall.OnShortcut(control, shortcut, source, ...)
             end
         end
     end
-    button(list, self.advanced and "Back to basic settings" or "Advanced settings", function()
-        self.advanced = not self.advanced
-        self:BuildRows()
-    end)
+    M.Log("SettingsUI", "rows_built", { count = #list, scrolling = false, preview_left_stick = true })
     if self.window_state == "open" then
         for _, row in ipairs(list) do row:Open() end
         list:SetFocus()
@@ -146,8 +140,7 @@ function MCCSettingsDialog:ApplyDraft()
 end
 
 function MCCSettingsDialog:GoBack()
-    if self.advanced then self.advanced = false; self:BuildRows()
-    else self:Close("cancel") end
+    self:Close("cancel")
 end
 
 function MCCSettingsDialog:OnShortcut(shortcut, source, ...)
@@ -175,23 +168,21 @@ function MCCSettingsDialog:Open(...)
                 M.StyleCursor(image, cfg)
                 last_size, last_color = cfg.CURSOR_SIZE, cfg.CURSOR_COLOR
             end
-            if not self.advanced then
-                local id = type(ActiveController) == "number" and ActiveController or 0
-                local connected = XInput.IsControllerConnected(id)
-                if id ~= last_controller or connected ~= last_connected then
-                    M.Log("SettingsUI", "preview_controller", { controller = id, connected = connected })
-                    last_controller, last_connected = id, connected
-                end
-                if connected then
-                    local state = XInput.CurrentState[id]
-                    if state and state.LeftThumb then
-                        local ax, ay = state.LeftThumb:xy()
-                        local width, height = area.content_box:sizex(), area.content_box:sizey()
-                        local _, screen_height = UIL.GetScreenSizeXY()
-                        local boost = M.Config.ENABLE_SPEED_BOOST == true and XInput.IsCtrlButtonPressed(id, cfg.SPEED_BOOST_BUTTON) == true
-                        M.AdvanceCursor(self.preview_motion, ax, ay, state.LeftThumb:Len2D(), time - last,
-                            Max(1, width - image.measure_width), Max(1, height - image.measure_height), boost, cfg, screen_height)
-                    end
+            local id = type(ActiveController) == "number" and ActiveController or 0
+            local connected = XInput.IsControllerConnected(id)
+            if id ~= last_controller or connected ~= last_connected then
+                M.Log("SettingsUI", "preview_controller", { controller = id, connected = connected })
+                last_controller, last_connected = id, connected
+            end
+            if connected then
+                local state = XInput.CurrentState[id]
+                if state and state.LeftThumb then
+                    local ax, ay = state.LeftThumb:xy()
+                    local width, height = area.content_box:sizex(), area.content_box:sizey()
+                    local _, screen_height = UIL.GetScreenSizeXY()
+                    local boost = M.Config.ENABLE_SPEED_BOOST == true and XInput.IsCtrlButtonPressed(id, cfg.SPEED_BOOST_BUTTON) == true
+                    M.AdvanceCursor(self.preview_motion, ax, ay, state.LeftThumb:Len2D(), time - last,
+                        Max(1, width - image.measure_width), Max(1, height - image.measure_height), boost, cfg, screen_height)
                 end
             end
             local x = MulDivRound(self.preview_motion.x, 1, area.scale:x())
@@ -200,12 +191,15 @@ function MCCSettingsDialog:Open(...)
             last = time
         end
     end)
-    M.Log("SettingsUI", "opened", { layout = "options_child_page", background = "preserved", label_alignment = "controls_column" })
+    M.Log("SettingsUI", "opened", { layout = "all_settings_left_preview_right", background = "preserved", scrolling = false })
 end
 
 function MCCSettingsDialog:Done(result)
     if M.settings_dialog == self then M.settings_dialog = nil end
     local host = self.settings_host
+    if self.parent and self.parent.window_state ~= "destroying" then
+        self.parent:SetHAlign(self.shell_halign)
+    end
     if host and host.window_state ~= "destroying" then
         for control, state in pairs(self.hidden_controls or {}) do
             if control.window_state ~= "destroying" then
@@ -240,12 +234,13 @@ function M.OpenSettings(host)
         hidden[control] = { visible = control:GetVisible(), fold = control:GetFoldWhenHidden() }
     end
     local dialog = MCCSettingsDialog:new({ settings_host = host, hidden_controls = hidden,
-        content_margins = content:GetMargins() }, content.parent)
+        content_margins = content:GetMargins(), shell_halign = content.parent:GetHAlign() }, content.parent)
     M.settings_dialog = dialog
     for control in pairs(hidden) do
         control:SetFoldWhenHidden(true)
         control:SetVisible(false)
     end
+    content.parent:SetHAlign("stretch")
     dialog:Open()
     return dialog
 end

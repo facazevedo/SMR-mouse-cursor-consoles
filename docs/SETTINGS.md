@@ -1,13 +1,14 @@
-# Version 9: cursor settings
+# Version 10: cursor settings
 
 Entry point: **Options > Controls > Mouse Cursor Consoles**, while the mod is
 enabled. Continuous values use the game's `PropNumber` control, including the
 same gold bar/thumb artwork as the normal Controls screen.
 
-The main view contains normal speed, absolute fast speed, cursor size and
-Advanced, with Back, Default and Apply in the native bottom action bar. The
-test-area cursor responds to the left stick immediately on the basic page. Advanced
-contains dead zone, response curve, smoothing, color, remembered position and seven distinct button bindings. Toggle
+All 15 settings appear in one left column without scrolling: normal speed,
+absolute fast speed, cursor size, dead zone, response curve, smoothing, color,
+remembered position and seven distinct button bindings. Back, Default and Apply
+remain in the native bottom action bar. The large square test area on the right
+responds to the left stick immediately. Toggle
 choices are L3/R3 to keep ordinary menu navigation available. Analog triggers are
 available for the polled boost modifier only. The README documents ranges/defaults.
 
@@ -21,7 +22,8 @@ available for the polled boost modifier only. The README documents ranges/defaul
   native Options shell. It reuses the shell safe margins, title and action-bar
   classes, retaining the existing animated background. The original Controls
   content, title and footer are hidden and folded while this page is open; their
-  prior visibility/folding and entry focus are restored on close. `XWindowRecreated`
+  prior visibility/folding and entry focus are restored on close. The Options
+  container stretches during the page and restores its original alignment on close. `XWindowRecreated`
   adds a native menu button at the top of the Controls list before its selection index is rebuilt.
   Only lists inside an OptionsDlg in the Controls category are extended. Rebuilding
   creates exactly one row; shutdown and parent closure clear mod-owned entries.
@@ -30,13 +32,12 @@ available for the polled boost modifier only. The README documents ranges/defaul
 - The actual cursor and test area share the same velocity calculation. Preview
   input never moves the game's mouse or dispatches clicks into the underlying UI.
 - Opening settings releases held clicks and exits mouse mode, restoring its prior
-  control style. On the basic page the D-pad navigates and edits while the left
-  stick drives the test-area cursor; Advanced retains native stick navigation.
+  control style. The D-pad navigates and edits while the left stick drives the
+  test-area cursor, including when tuning and binding rows are selected.
   Closing the page leaves mouse mode off; press the configured toggle to resume it.
 - Draft changes preview size/color and movement without changing gameplay.
   Invalid ranges, fast speed below normal, and duplicate bindings block Apply.
-  Back from basic discards edits; Back from Advanced preserves the draft and
-  returns to basic. Default changes the draft; Apply is required to save.
+  Back discards edits. Default changes the draft; Apply is required to save.
 - Save failures report an error on the page and preserve previous settings.
   Unsupported or corrupt stored settings are rejected with boolean-gated diagnostics.
 - Smoothing is off by default. It filters velocity, not cursor position, and stops
@@ -45,9 +46,9 @@ available for the polled boost modifier only. The README documents ranges/defaul
   session. It is clamped/scaled to the display on reactivation. Coordinates and
   UI objects are never persisted in colony saves.
 - Open settings modals and Controls entries are cleaned up on shutdown/reload.
-  Parent closure removes the modal; the basic-page preview ends with the page.
+  Parent closure removes the modal; the preview ends with the page.
 
-Version in `metadata.lua` is **9**. Both manifests load eight code files in the same
+Version in `metadata.lua` is **10**. Both manifests load eight code files in the same
 order, with settings data before the cursor and settings UI before entry hooks.
 `items.lua` registers code only. Private property definitions belong to
 `mcc_settings.lua`; metadata advertises no generic options. Deployment has 11 files.
@@ -57,7 +58,39 @@ cover validation, loading, save errors/requests, applied values, and dialog life
 they use the existing debug gate. There is no unconditional mod debug output.
 No original cursor artwork or TEST. NOT READY. preview image was changed.
 
-## Version 9 verification (2026-09-29)
+## Version 10 verification (2026-09-29)
+
+Removed the Advanced page and scrollbar. Native controls at 85% scale fit all 15
+rows in the left column; the right preview uses the native `XAspectWindow` with
+`Aspect=point(1,1)` and fits the available space as an exact square. The original
+Options container alignment is saved and restored when the page closes.
+All numeric controls use native `dpad_only` metadata, and choice rows accept
+D-pad adjustment while the left stick remains dedicated to the preview.
+
+Read-only references: `PropNumber`, `MenuEntrySmall`, `OptionsContentWindow`,
+`XWindow`, `XScroll`, `XAspectWindow` in `XControl.lua`, and `PGMainMenu`.
+No game, generated, protected, third-party or image source was edited.
+The existing `DEBUG_LOGS=false` gate covers row count, layout and controller
+diagnostics; `DEBUG_INPUT=false` is unchanged.
+
+Passed 27 native settings checks and 25 native entry/restoration checks,
+including all rows fitting above the footer, reaching the last row without
+scrolling, equal preview width/height, immediate movement and restoration of
+the native container alignment. The actual PGMainMenu page was visually checked
+at 3840x2043: the preview measured 1219x1219 pixels. Screenshot and reports are
+ignored under `tests/results/settings-v10-square.png`, `native-settings-v10.json`
+and `native-entry-v10.json`. All 17 payload/test Lua files passed syntax checks;
+81 behavior and 48 settings/motion host checks passed. All 11 payload files were
+deployed and hash-verified. The final debug game log
+`MarsDebug.exe-20260929-21.32.01-6aad2de6.log` had no Lua errors or assertions;
+it and the recent retail startup log were reviewed and retained.
+
+Manual check: restart, open Options > Controls > Mouse Cursor Consoles and verify
+all 15 rows are visible, the preview is square, and the left stick stays inside
+it while the D-pad edits any row. Check Apply, Default and Back. Physical console
+controllers, console rendering and other display sizes remain unverified.
+
+## Historical version 9 verification (2026-09-29)
 
 The basic page now polls the active controller's left stick as soon as it opens.
 It uses the existing isolated preview motion and draft settings, including the

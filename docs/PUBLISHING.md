@@ -1,10 +1,10 @@
 # Test-build publishing validation
 
-## Current: version 9 (local payload)
+## Current: version 10 (local payload)
 
-The immediate test-area cursor and Controls-entry alignment are deployed locally.
+The single-page settings and large square test area are deployed locally.
 Required metadata and the existing TEST BUILD - NOT READY image are retained.
-No v9 native package or store upload was produced. Rebuild the package before publishing;
+No v10 native package or store upload was produced. Rebuild the package before publishing;
 the verified v5 package below contains the previous settings layout.
 See [settings validation](SETTINGS.md).
 

@@ -1,5 +1,14 @@
 # Validation record
 
+## Version 10: all settings beside a square preview
+
+All 15 settings fit in the left column without scrolling or an Advanced page.
+A large 1:1 preview occupies the right side. Native checks passed for square
+geometry, full row visibility, D-pad navigation, stick isolation and restoring
+the Options container on exit: 27 settings and 25 entry checks. Syntax and all
+129 host checks passed. See [settings validation](SETTINGS.md) for the screenshot,
+read-only game references, logs, deployment and remaining manual checks.
+
 ## Version 9: immediate preview movement
 
 The basic settings page now reserves the left stick for the test-area cursor

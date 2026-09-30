@@ -1,7 +1,7 @@
 # Mouse Cursor Consoles
 
 A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor and
-temporarily uses the PC interface. Current release: metadata version **9**.
+temporarily uses the PC interface. Current release: metadata version **10**.
 
 | Action | PS5 | Xbox Series X/S |
 | --- | --- | --- |
@@ -54,9 +54,9 @@ publication was performed. Paradox advertises cross-platform mod support on the
 [official game page](https://www.paradoxinteractive.com/games/surviving-mars-relaunched/about),
 but that does not certify this particular code mod on either console.
 
-Version 9 is deployed locally as a **TEST BUILD - NOT READY** release. Required
+Version 10 is deployed locally as a **TEST BUILD - NOT READY** release. Required
 metadata and the preview are present. The last verified native `.fpk` package is
-version 5; rebuild it before publishing version 9. See [publishing validation](docs/PUBLISHING.md).
+version 5; rebuild it before publishing version 10. See [publishing validation](docs/PUBLISHING.md).
 Use the Mod Editor's Paradox upload action while signed in to publish the deployed
 mod. Store acceptance and console functionality still require verification.
 
@@ -68,16 +68,16 @@ aligned with the vanilla control labels from the moment Controls opens).
 This also works on PC with a connected controller, including a PS5 controller
 recognized by the game. This is the only settings entry; the general Mod Options
 list does not include this mod.
-The page stays in the native left-side Options layout, retains the animated
+The page uses the native Options shell, retains the animated
 menu background, and shows **OPTIONS / CONTROLS / MOUSE CURSOR CONSOLES**.
-Action rows, instructions, test area and status align with the slider labels from
-page opening and remain aligned during hover and focus.
+All 15 settings fit in a compact left column without scrolling. A large square
+test area sits on the right, with space around it.
 It uses the game's gold slider bars and supports controller navigation
 with mouse mode off. Opening it switches mouse mode off and releases held clicks;
 press your configured toggle again after closing settings to resume.
 
-The basic page has **Normal cursor speed**, **Fast cursor speed**, and **Cursor
-size %**, plus **Advanced settings**. The native bottom bar
+The page includes **Normal cursor speed**, **Fast cursor speed**, **Cursor
+size %**, tuning, color and all button bindings. The native bottom bar
 provides **Back**, **Default**, and **Apply**. D-pad Up/Down selects a row; Left/Right adjusts
 a slider or choice. Mouse dragging works on sliders too. Fast speed is an absolute
 speed and must be at least normal speed, not a fixed multiplier.
@@ -90,7 +90,7 @@ speed and must be at least normal speed, not a fixed multiplier.
 | Stick dead zone (out of 32,767) | 0-16,000 | 6,000 |
 | Smoothing | 0-150 ms | 0 (off) |
 
-**Advanced** adds the dead-zone and smoothing sliders, Linear/Gradual stick
+The same column includes the dead-zone and smoothing sliders, Linear/Gradual stick
 response, White/Yellow/Cyan cursor tint, Remember cursor position, and all seven
 button bindings. Gradual response makes small movements finer without changing
 full-stick speed. Smoothing softens changes in velocity but adds delay; releasing
@@ -99,13 +99,12 @@ bindings are supported for the hold-to-boost action only. The toggle is restrict
 to L3/R3 stick clicks so normal menu navigation remains available. Native construction
 modifiers (multiple placement/show range) are not emulated by these mouse bindings.
 
-The left stick moves the cursor in the test area as soon as the basic page opens;
+The left stick moves the cursor in the test area as soon as the page opens;
 hold your boost button to preview fast speed. The D-pad continues to select and
 edit rows. Preview size/color changes appear immediately; changes affect the
 real cursor only after Apply. A connected controller is required for movement
 testing, but not for editing the sliders.
-Back from the basic page discards the draft and returns focus to Controls.
-Back from Advanced returns to basic settings. Default restores draft defaults;
+Back discards the draft and returns focus to Controls. Default restores draft defaults;
 Apply saves them and returns to Controls. On a controller, use Circle/B for Back,
 Triangle/Y for Default, and Square/X for Apply.
 
@@ -160,8 +159,8 @@ under `tests/` cover input, settings and the Controls entry in a disposable Wind
 `smr-harness`; they are excluded from the payload. See
 [validation evidence and source references](docs/VALIDATION.md).
 
-Also verify controller navigation, slider dragging, preview movement/boost, Advanced
-scrolling, Default, Back, conflicting bindings, and preference persistence after
+Also verify controller navigation, slider dragging, preview movement/boost, all 15
+rows fitting without scrolling, Default, Back, conflicting bindings, and preference persistence after
 a full restart on each console. See [settings validation](docs/SETTINGS.md).
 
 Before promoting the test build to a stable release, perform these checks
