@@ -1,11 +1,12 @@
-# Version 8: cursor settings
+# Version 9: cursor settings
 
 Entry point: **Options > Controls > Mouse Cursor Consoles**, while the mod is
 enabled. Continuous values use the game's `PropNumber` control, including the
 same gold bar/thumb artwork as the normal Controls screen.
 
-The main view contains normal speed, absolute fast speed, cursor size, Test cursor,
-Advanced, with Back, Default and Apply in the native bottom action bar. Advanced
+The main view contains normal speed, absolute fast speed, cursor size and
+Advanced, with Back, Default and Apply in the native bottom action bar. The
+test-area cursor responds to the left stick immediately on the basic page. Advanced
 contains dead zone, response curve, smoothing, color, remembered position and seven distinct button bindings. Toggle
 choices are L3/R3 to keep ordinary menu navigation available. Analog triggers are
 available for the polled boost modifier only. The README documents ranges/defaults.
@@ -29,8 +30,9 @@ available for the polled boost modifier only. The README documents ranges/defaul
 - The actual cursor and test area share the same velocity calculation. Preview
   input never moves the game's mouse or dispatches clicks into the underlying UI.
 - Opening settings releases held clicks and exits mouse mode, restoring its prior
-  control style. Controller input then follows normal UI navigation. Closing the
-  page leaves mouse mode off; press the configured toggle to resume it.
+  control style. On the basic page the D-pad navigates and edits while the left
+  stick drives the test-area cursor; Advanced retains native stick navigation.
+  Closing the page leaves mouse mode off; press the configured toggle to resume it.
 - Draft changes preview size/color and movement without changing gameplay.
   Invalid ranges, fast speed below normal, and duplicate bindings block Apply.
   Back from basic discards edits; Back from Advanced preserves the draft and
@@ -43,9 +45,9 @@ available for the polled boost modifier only. The README documents ranges/defaul
   session. It is clamped/scaled to the display on reactivation. Coordinates and
   UI objects are never persisted in colony saves.
 - Open settings modals and Controls entries are cleaned up on shutdown/reload.
-  Parent closure removes the modal; focus loss exits preview testing.
+  Parent closure removes the modal; the basic-page preview ends with the page.
 
-Version in `metadata.lua` is **8**. Both manifests load eight code files in the same
+Version in `metadata.lua` is **9**. Both manifests load eight code files in the same
 order, with settings data before the cursor and settings UI before entry hooks.
 `items.lua` registers code only. Private property definitions belong to
 `mcc_settings.lua`; metadata advertises no generic options. Deployment has 11 files.
@@ -54,6 +56,37 @@ order, with settings data before the cursor and settings UI before entry hooks.
 cover validation, loading, save errors/requests, applied values, and dialog lifecycle;
 they use the existing debug gate. There is no unconditional mod debug output.
 No original cursor artwork or TEST. NOT READY. preview image was changed.
+
+## Version 9 verification (2026-09-29)
+
+The basic page now polls the active controller's left stick as soon as it opens.
+It uses the existing isolated preview motion and draft settings, including the
+hold-to-boost binding. The Test cursor row and its focus mode were removed.
+Native `XList.LeftThumbScroll=false` and the three basic `PropNumber` fields'
+supported `dpad_only` metadata reserve the left stick for preview movement;
+the D-pad still navigates and edits. Advanced restores native stick navigation.
+The test-area label now describes the immediate control. Controller connection
+changes are logged only when `DEBUG_LOGS == true`.
+
+All 24 native settings checks passed with simulated controller state, including
+immediate movement, absence of the Test cursor row, D-pad adjustment, unchanged
+basic selection/slider values under stick input, and Advanced navigation. All
+24 native Controls-entry checks also passed. Lua syntax passed for 17 payload
+and test files; host suites passed 81 behavior and 48 settings/motion checks.
+The debug game loaded version 9; all 11 payload files were hash-verified in the
+local deployment. The rendered basic page was reviewed with four rows and the
+updated test-area instruction. An exploratory screenshot-helper command caused
+an unrelated `rawset` argument error in the first debug log. A fresh debug run
+passed both native suites, and its game log had no Lua errors or assertions.
+Game, protected, generated and third-party sources were not edited. Game and
+harness logs were reviewed and retained.
+Physical PS5/Xbox controller and console rendering remain to be checked.
+
+Manual check: restart the game, open Options > Controls > Mouse Cursor Consoles,
+move the left stick without selecting a row, then hold the configured boost
+button. Confirm the cursor stays inside the test area, the D-pad edits sliders,
+and Apply and Back behave normally. Enter Advanced and return to the basic page
+to confirm preview movement resumes.
 
 ## Version 8 verification (2026-09-29)
 

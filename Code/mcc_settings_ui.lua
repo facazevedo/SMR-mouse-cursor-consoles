@@ -7,8 +7,8 @@ DefineClass.MCCSettingsDialog = {
     __parents = { "XDialog" },
     Id = "idMCCSettings", IdNode = true, IsModal = true,
     Dock = "box", ZOrder = 2, Background = 0,
-    draft = false, settings_host = false, advanced = false, testing = false,
-    preview_motion = false, preview_controller = false,
+    draft = false, settings_host = false, advanced = false,
+    preview_motion = false,
     hidden_controls = false, content_margins = false,
 }
 
@@ -64,7 +64,7 @@ function MCCSettingsDialog:Init()
     local preview = XWindow:new({ Id = "idPreview", MinHeight = 135, MaxHeight = 135,
         Margins = text_margins, Background = RGBA(35, 52, 68, 100),
         Clip = "self", HandleMouse = false }, panel)
-    XText:new({ Translate = true, TextStyle = "ListItem4", Text = Untranslated("TEST AREA  -  choose Test cursor to move here"),
+    XText:new({ Translate = true, TextStyle = "ListItem4", Text = Untranslated("TEST AREA  -  move the cursor with the left stick"),
         HandleMouse = false, Padding = box(0, 2, 0, 2) }, preview)
     XImage:new({ Id = "idPreviewCursor", HAlign = "left", VAlign = "top",
         HandleMouse = false, Image = const.DefaultMouseCursor }, preview)
@@ -75,9 +75,11 @@ function MCCSettingsDialog:Init()
 end
 
 function MCCSettingsDialog:BuildRows()
-    self.testing = false
     local list = self:ResolveId("idList")
     list:Clear()
+    list.LeftThumbScroll = self.advanced
+    M.Log("SettingsUI", "rows_built", { advanced = self.advanced,
+        preview_left_stick = not self.advanced, native_left_stick_scroll = list.LeftThumbScroll })
     local category = self.settings_host.mode_param
     self:ResolveId("idTitle"):SetSubtitle(TLookupTag("<GameColorTagF>") .. Untranslated(" / ") ..
         TLookupTag("<GameColorCloseTagF>") .. category.caps_name ..
@@ -120,9 +122,6 @@ function MCCSettingsDialog:BuildRows()
             end
         end
     end
-    if not self.advanced then
-        button(list, "Test cursor", function() self:BeginTest() end)
-    end
     button(list, self.advanced and "Back to basic settings" or "Advanced settings", function()
         self.advanced = not self.advanced
         self:BuildRows()
@@ -147,28 +146,8 @@ function MCCSettingsDialog:ApplyDraft()
 end
 
 function MCCSettingsDialog:GoBack()
-    if self.testing then self:EndTest()
-    elseif self.advanced then self.advanced = false; self:BuildRows()
+    if self.advanced then self.advanced = false; self:BuildRows()
     else self:Close("cancel") end
-end
-
-function MCCSettingsDialog:BeginTest()
-    local controller = type(ActiveController) == "number" and ActiveController or 0
-    if not XInput.IsControllerConnected(controller) then
-        self:ResolveId("idStatus"):SetText(Untranslated("Connect a controller to test left-stick movement. Sliders can still be edited."))
-        return
-    end
-    self.preview_controller, self.testing = controller, true
-    self.preview_motion.vx, self.preview_motion.vy = 0, 0
-    self:SetFocus()
-    self:ResolveId("idStatus"):SetText(Untranslated("Move left stick; hold your boost button for fast speed. Circle / B or Escape returns to settings."))
-end
-
-function MCCSettingsDialog:EndTest()
-    self.testing = false
-    self:ResolveId("idList"):SetFocus()
-    self:ResolveId("idList"):SetSelection(1)
-    self:ResolveId("idStatus"):SetText(Untranslated("Test ended. Apply saves your settings; Back discards changes."))
 end
 
 function MCCSettingsDialog:OnShortcut(shortcut, source, ...)
@@ -176,7 +155,6 @@ function MCCSettingsDialog:OnShortcut(shortcut, source, ...)
         self:GoBack()
         return "break"
     end
-    if self.testing then return "break" end
     return XDialog.OnShortcut(self, shortcut, source, ...)
 end
 
@@ -187,6 +165,7 @@ function MCCSettingsDialog:Open(...)
     self:CreateThread("MCCPreview", function()
         local last = RealTime()
         local last_size, last_color, last_x, last_y
+        local last_controller, last_connected
         while self.window_state ~= "destroying" do
             WaitNextFrame()
             local time = RealTime()
@@ -196,10 +175,14 @@ function MCCSettingsDialog:Open(...)
                 M.StyleCursor(image, cfg)
                 last_size, last_color = cfg.CURSOR_SIZE, cfg.CURSOR_COLOR
             end
-            if self.testing then
-                local id = self.preview_controller
-                if not XInput.IsControllerConnected(id) then self:EndTest()
-                else
+            if not self.advanced then
+                local id = type(ActiveController) == "number" and ActiveController or 0
+                local connected = XInput.IsControllerConnected(id)
+                if id ~= last_controller or connected ~= last_connected then
+                    M.Log("SettingsUI", "preview_controller", { controller = id, connected = connected })
+                    last_controller, last_connected = id, connected
+                end
+                if connected then
                     local state = XInput.CurrentState[id]
                     if state and state.LeftThumb then
                         local ax, ay = state.LeftThumb:xy()

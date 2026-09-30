@@ -1,7 +1,7 @@
 # Mouse Cursor Consoles
 
 A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor and
-temporarily uses the PC interface. Current release: metadata version **8**.
+temporarily uses the PC interface. Current release: metadata version **9**.
 
 | Action | PS5 | Xbox Series X/S |
 | --- | --- | --- |
@@ -54,9 +54,9 @@ publication was performed. Paradox advertises cross-platform mod support on the
 [official game page](https://www.paradoxinteractive.com/games/surviving-mars-relaunched/about),
 but that does not certify this particular code mod on either console.
 
-Version 8 is deployed locally as a **TEST BUILD - NOT READY** release. Required
+Version 9 is deployed locally as a **TEST BUILD - NOT READY** release. Required
 metadata and the preview are present. The last verified native `.fpk` package is
-version 5; rebuild it before publishing version 8. See [publishing validation](docs/PUBLISHING.md).
+version 5; rebuild it before publishing version 9. See [publishing validation](docs/PUBLISHING.md).
 Use the Mod Editor's Paradox upload action while signed in to publish the deployed
 mod. Store acceptance and console functionality still require verification.
 
@@ -77,7 +77,7 @@ with mouse mode off. Opening it switches mouse mode off and releases held clicks
 press your configured toggle again after closing settings to resume.
 
 The basic page has **Normal cursor speed**, **Fast cursor speed**, and **Cursor
-size %**, plus **Test cursor** and **Advanced settings**. The native bottom bar
+size %**, plus **Advanced settings**. The native bottom bar
 provides **Back**, **Default**, and **Apply**. D-pad Up/Down selects a row; Left/Right adjusts
 a slider or choice. Mouse dragging works on sliders too. Fast speed is an absolute
 speed and must be at least normal speed, not a fixed multiplier.
@@ -99,10 +99,11 @@ bindings are supported for the hold-to-boost action only. The toggle is restrict
 to L3/R3 stick clicks so normal menu navigation remains available. Native construction
 modifiers (multiple placement/show range) are not emulated by these mouse bindings.
 
-Select **Test cursor** to move an isolated preview with the left stick and your
-boost button. Circle/B or Escape returns to settings. Preview size/color changes
-appear immediately; changes affect the real cursor only after Apply. A connected
-controller is required for movement testing, but not for editing the sliders.
+The left stick moves the cursor in the test area as soon as the basic page opens;
+hold your boost button to preview fast speed. The D-pad continues to select and
+edit rows. Preview size/color changes appear immediately; changes affect the
+real cursor only after Apply. A connected controller is required for movement
+testing, but not for editing the sliders.
 Back from the basic page discards the draft and returns focus to Controls.
 Back from Advanced returns to basic settings. Default restores draft defaults;
 Apply saves them and returns to Controls. On a controller, use Circle/B for Back,

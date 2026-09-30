@@ -1,5 +1,13 @@
 # Validation record
 
+## Version 9: immediate preview movement
+
+The basic settings page now reserves the left stick for the test-area cursor
+without a separate Test cursor action; the D-pad edits settings and Advanced
+retains native stick navigation. Simulated-controller native settings and
+Controls-entry suites each passed 24 checks. Syntax and 129 host checks passed;
+see [settings validation](SETTINGS.md) for runtime evidence and manual checks.
+
 ## Version 8: Controls entry alignment
 
 The Mouse Cursor Consoles entry now aligns with vanilla Controls labels on the

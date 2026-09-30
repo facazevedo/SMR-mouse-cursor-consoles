@@ -1,10 +1,10 @@
 # Test-build publishing validation
 
-## Current: version 8 (local payload)
+## Current: version 9 (local payload)
 
-The native Options layout and Controls-entry alignment update is deployed locally. Required metadata and the
-existing TEST BUILD - NOT READY image are retained. No v8 native package or store
-upload was produced for this UI change. Rebuild the package before publishing;
+The immediate test-area cursor and Controls-entry alignment are deployed locally.
+Required metadata and the existing TEST BUILD - NOT READY image are retained.
+No v9 native package or store upload was produced. Rebuild the package before publishing;
 the verified v5 package below contains the previous settings layout.
 See [settings validation](SETTINGS.md).
 
