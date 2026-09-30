@@ -1,4 +1,4 @@
-# Version 6: cursor settings
+# Version 7: cursor settings
 
 Entry point: **Options > Controls > Mouse Cursor Consoles**, while the mod is
 enabled. Continuous values use the game's `PropNumber` control, including the
@@ -45,7 +45,7 @@ available for the polled boost modifier only. The README documents ranges/defaul
 - Open settings modals and Controls entries are cleaned up on shutdown/reload.
   Parent closure removes the modal; focus loss exits preview testing.
 
-Version in `metadata.lua` is **6**. Both manifests load eight code files in the same
+Version in `metadata.lua` is **7**. Both manifests load eight code files in the same
 order, with settings data before the cursor and settings UI before entry hooks.
 `items.lua` registers code only. Private property definitions belong to
 `mcc_settings.lua`; metadata advertises no generic options. Deployment has 11 files.
@@ -55,7 +55,40 @@ cover validation, loading, save errors/requests, applied values, and dialog life
 they use the existing debug gate. There is no unconditional mod debug output.
 No original cursor artwork or TEST. NOT READY. preview image was changed.
 
-## Version 6 verification (2026-09-29)
+## Version 7 verification (2026-09-29)
+
+Test cursor, Advanced settings, the D-pad instructions, test-area label and
+preview status now share the Normal cursor speed text column on initial opening.
+Mod-owned menu rows omit unused inherited label/icon layout space and keep their
+margin on hover/focus. Instructions account for the native scrollbar's reserved
+width and use explicit horizontal text padding. Cursor motion, preferences,
+background, vertical spacing, assets and load order are unchanged.
+
+Read-only references: MenuEntrySmall, ScrollbarNew and PropNumber definitions;
+XButton, XLabel, XImage, XControl and XText. Only mod-owned UI instances change;
+no game, generated, protected or third-party source was edited. The existing
+DEBUG_LOGS=false gate reports `label_alignment=controls_column` when enabled;
+DEBUG_INPUT=false is unchanged.
+
+Lua syntax passed for the payload. A native layout probe measured all six text
+origins at x=313 on opening, hover and focus (3840x2043 Windows rendering), and the
+rendered page was visually reviewed. Native entry and settings suites passed
+21 and 22 checks. Local ignored evidence: `tests/results/alignment-v7.json`,
+`native-entry-v7.json`, `native-settings-v7.json`, and `settings-v7-aligned.png`.
+All 11 payload files were copied and hash-verified in the configured local mod
+folder. No package or store upload was made.
+
+Reviewed the available startup portion of the active retail log
+`Mars.exe-20260929-20.54.54-6aad2d75.log`, plus debug log
+`MarsDebug.exe-20260929-21.01.07-6aad2de6.log` and harness log
+`daemon-20260930-010107.log`. The debug checks had no Lua errors or assertions.
+Logs were retained, and the user's retail game process was left running.
+
+Manual check: restart, open the page, and confirm the five requested labels align
+with Normal cursor speed immediately and while hovering/selecting the action
+rows. Physical-console rendering and in-colony behavior remain untested.
+
+## Historical version 6 verification (2026-09-29)
 
 Replaced the centered opaque screen with a child page in the existing Options
 shell. The title reads OPTIONS / CONTROLS / MOUSE CURSOR CONSOLES; Advanced adds

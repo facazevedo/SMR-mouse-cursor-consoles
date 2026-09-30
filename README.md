@@ -1,7 +1,7 @@
 # Mouse Cursor Consoles
 
 A Surviving Mars: Relaunched Lua mod that toggles a left-stick mouse cursor and
-temporarily uses the PC interface. Current release: metadata version **6**.
+temporarily uses the PC interface. Current release: metadata version **7**.
 
 | Action | PS5 | Xbox Series X/S |
 | --- | --- | --- |
@@ -54,9 +54,9 @@ publication was performed. Paradox advertises cross-platform mod support on the
 [official game page](https://www.paradoxinteractive.com/games/surviving-mars-relaunched/about),
 but that does not certify this particular code mod on either console.
 
-Version 6 is deployed locally as a **TEST BUILD - NOT READY** release. Required
+Version 7 is deployed locally as a **TEST BUILD - NOT READY** release. Required
 metadata and the preview are present. The last verified native `.fpk` package is
-version 5; rebuild it before publishing version 6. See [publishing validation](docs/PUBLISHING.md).
+version 5; rebuild it before publishing version 7. See [publishing validation](docs/PUBLISHING.md).
 Use the Mod Editor's Paradox upload action while signed in to publish the deployed
 mod. Store acceptance and console functionality still require verification.
 
@@ -69,6 +69,8 @@ recognized by the game. This is the only settings entry; the general Mod Options
 list does not include this mod.
 The page stays in the native left-side Options layout, retains the animated
 menu background, and shows **OPTIONS / CONTROLS / MOUSE CURSOR CONSOLES**.
+Action rows, instructions, test area and status align with the slider labels from
+page opening and remain aligned during hover and focus.
 It uses the game's gold slider bars and supports controller navigation
 with mouse mode off. Opening it switches mouse mode off and releases held clicks;
 press your configured toggle again after closing settings to resume.

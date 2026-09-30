@@ -1,5 +1,11 @@
 # Validation record
 
+## Version 7: settings text alignment
+
+The settings action rows, instructions, preview area and status share the slider
+label column immediately on opening and during hover/focus. Native geometry and
+visual checks are recorded in [settings validation](SETTINGS.md).
+
 ## Version 6: native Options layout
 
 Cursor settings now retain the native Options shell, animated background,
